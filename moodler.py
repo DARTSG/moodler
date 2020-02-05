@@ -5,12 +5,11 @@ and downloads student submissions
 To use, you need to create a web service user and enroll it in the module
 Follow the instructions at http://<MOODLE IP>/admin/category.php?category=webservicesettings
 
+The moodle API documentation can be found at http://192.168.10.158/admin/webservice/documentation.php
+
 After following the instructions and enrolling the new user, edit the following variables below:
 TOKEN
 URL
-USER_MAP
-
-To edit the USER_MAP, look in the url to find out the user id of each student
 
 Ooh, and use python3 to run this
 and install requests package
@@ -21,13 +20,11 @@ from pathlib import Path
 import urllib.request
 import argparse
 
+
 TOKEN = '53e2cd85d463774b6b4dc67e485ca61e'
 URL = 'http://192.168.10.158'
 REQUEST_FORMAT = '{}/webservice/rest/server.php?wstoken={}&wsfunction={}&moodlewsrestformat=json'.format(
     URL, TOKEN, '{}')
-
-USER_MAP = {
-}
 
 
 def flatten(list_of_lists):
@@ -36,6 +33,20 @@ def flatten(list_of_lists):
         for item in sublist:
             flat_list.append(item)
     return flat_list
+
+
+def list_students():
+    """
+    Returns a map linking the id of all users to their full name
+    """
+    response = requests.get(REQUEST_FORMAT.format('core_user_get_users')
+                            + '&criteria[0][key]=email&criteria[0][value]=%%')
+
+    # Create users map
+    users_map = {}
+    for user in response.json()['users']:
+        users_map[user['id']] = user['firstname'] + ' ' + user['lastname']
+    return users_map
 
 
 def courses():
@@ -91,6 +102,7 @@ def download_submissions(course_id, folder, download_all=False):
     Downloads all the submissions from a specific course into a folder
     """
     assigns = assignments(course_id)
+    users_map = list_students()
     for assign_id, subs in submissions(assigns.keys()).items():
         for submission in subs:
             # Skip ungraded
@@ -106,7 +118,7 @@ def download_submissions(course_id, folder, download_all=False):
                             # Create subfolders
                             submission_folder = Path(folder) \
                                                 / Path(assigns[assign_id]) \
-                                                / Path(USER_MAP[submission['userid']])
+                                                / Path(users_map[submission['userid']])
                             submission_folder.mkdir(parents=True, exist_ok=True)
 
                             # Download the file
@@ -144,7 +156,5 @@ def main():
     elif 'download' == args.which:
         download_submissions(args.course_id, args.folder, args.all)
 
-
 if '__main__' == __name__:
-    # print(submissions2([3101]))
     main()
