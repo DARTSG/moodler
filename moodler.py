@@ -86,6 +86,17 @@ def submissions(assignment_ids):
     return subs
 
 
+def mod_assign_get_grades(assignment_ids):
+    """
+    Returns the grades for all the assigments
+    """
+    url = REQUEST_FORMAT.format('mod_assign_get_grades')
+    for i, assignment_id in enumerate(assignment_ids):
+        url += '&assignment_id[{}]={}'.format(i, assignment_id)
+    response = requests.get(url).json()
+    return response
+
+
 def ungraded_submissions(course_id, verbose=False):
     """
     Returns the amount of ungraded exercises give a course id
