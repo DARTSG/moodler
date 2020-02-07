@@ -86,14 +86,24 @@ def submissions(assignment_ids):
     return subs
 
 
-def ungraded_submissions(course_id):
+def ungraded_submissions(course_id, verbose=False):
     """
     Returns the amount of ungraded exercises give a course id
     """
+    assigns = assignments(course_id)
+    names = set()
+
     ungraded = 0
-    for submission in flatten(submissions(assignments(course_id).keys()).values()):
-        if 'submitted' == submission['status'] and 'notgraded' == submission['gradingstatus']:
-            ungraded += 1
+    for assign_id, subs in submissions(assigns.keys()).items():
+        for submission in subs:
+            if 'submitted' == submission['status'] \
+               and 'notgraded' == submission['gradingstatus']:
+                ungraded += 1
+                names.add(assigns[assign_id])
+
+    if verbose:
+        for name in names:
+            print(name)
     return ungraded
 
 
@@ -136,6 +146,8 @@ def main():
     parser_ungraded = subparsers.add_parser('ungraded',
                                             help='Prints the amount of ungraded submissions')
     parser_ungraded.add_argument('course_id', type=int, help='The course id to query')
+    parser_ungraded.add_argument('--verbose', '-v', action='store_true',
+                                 help='Prints the names of the ungraded exercises')
     parser_ungraded.set_defaults(which='ungraded')
 
     parser_download = subparsers.add_parser('download',
@@ -152,7 +164,7 @@ def main():
     if 'none' == args.which:
         parser.print_help()
     elif 'ungraded' == args.which:
-        print("Ungraded: {}".format(ungraded_submissions(args.course_id)))
+        print("Ungraded: {}".format(ungraded_submissions(args.course_id, verbose=args.verbose)))
     elif 'download' == args.which:
         download_submissions(args.course_id, args.folder, args.all)
 
