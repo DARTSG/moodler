@@ -120,7 +120,7 @@ def list_students():
     return users_map
 
 
-def courses():
+def core_course_get_courses():
     """
     Returns a tuple of ids and course names
     """
