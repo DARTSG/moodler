@@ -57,7 +57,7 @@ def courses():
     return response.json()
 
 
-def assignments(course_id):
+def mod_assign_get_assignments(course_id):
     """
     Returns a dictionary mapping assignment id to its name from a specified course
     """
@@ -69,7 +69,7 @@ def assignments(course_id):
     return assigns
 
 
-def submissions(assignment_ids):
+def mod_assign_get_submissions(assignment_ids):
     """
     Returns the submissions for the given assignments in a dict
     mapping assignment id to submissions
@@ -92,7 +92,7 @@ def mod_assign_get_grades(assignment_ids):
     """
     url = REQUEST_FORMAT.format('mod_assign_get_grades')
     for i, assignment_id in enumerate(assignment_ids):
-        url += '&assignment_id[{}]={}'.format(i, assignment_id)
+        url += '&assignmentids[{}]={}'.format(i, assignment_id)
     response = requests.get(url).json()
     return response
 
@@ -101,11 +101,11 @@ def ungraded_submissions(course_id, verbose=False):
     """
     Returns the amount of ungraded exercises give a course id
     """
-    assigns = assignments(course_id)
+    assigns = mod_assign_get_assignments(course_id)
     names = set()
 
     ungraded = 0
-    for assign_id, subs in submissions(assigns.keys()).items():
+    for assign_id, subs in mod_assign_get_submissions(assigns.keys()).items():
         for submission in subs:
             if 'submitted' == submission['status'] \
                and 'notgraded' == submission['gradingstatus']:
@@ -122,9 +122,9 @@ def download_submissions(course_id, folder, download_all=False):
     """
     Downloads all the submissions from a specific course into a folder
     """
-    assigns = assignments(course_id)
+    assigns = mod_assign_get_assignments(course_id)
     users_map = list_students()
-    for assign_id, subs in submissions(assigns.keys()).items():
+    for assign_id, subs in mod_assign_get_submissions(assigns.keys()).items():
         for submission in subs:
             # Skip ungraded
             if not 'submitted' == submission['status']:
