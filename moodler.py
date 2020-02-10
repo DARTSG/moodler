@@ -27,6 +27,77 @@ REQUEST_FORMAT = '{}/webservice/rest/server.php?wstoken={}&wsfunction={}&moodlew
     URL, TOKEN, '{}')
 
 
+class SubmissionFile():
+    def __init__(self, submission_file_json):
+        self.url = submission_file_json['fileurl']
+        self.timestamp = submission_file_json['timemodified']
+        self._json_data = submission_file_json
+
+    def __repr__(self):
+        return 'SubmissionFile(url={}, timestamp={})'.format(self.url, self.timestamp)
+
+
+class Grade():
+    def __init__(self, grade_json):
+        self.timestamp = grade_json['timemodified']
+        self.grade = grade_json['grade']
+        self._json_data = grade_json
+
+    def __repr__(self):
+        return 'Grade(grade={}, timestamp={})'.format(self.grade, self.timestamp)
+
+
+class Submission():
+    def __init__(self, user_id, grade_json, submission_json):
+        self.user_id = user_id
+        if grade_json is not None:
+            self.grade = Grade(grade_json)
+        else:
+            self.grade = None
+        self.status = submission_json['status']
+        self.gradingstatus = submission_json['gradingstatus']
+        self.submission_files = []
+        for plugin in submission_json['plugins']:
+            if 'file' != plugin['type']:
+                continue
+            for filearea in plugin['fileareas']:
+                for f in filearea['files']:
+                    self.submission_files.append(SubmissionFile(f))
+
+
+    def __repr__(self):
+        return 'Submission(user_id={}, status={}, gradingstatus={}, grade={}, submitted={})'.format(self.user_id, self.status, self.gradingstatus, self.grade, len(self.submission_files))
+
+
+    def needs_grading(self):
+        if 'submitted' == self.status:
+            if 'notgraded' == self.gradingstatus:
+                return True
+            if self.grade is not None and self.grade.timestamp - max([sf.timestamp for sf in self.submission_files]) < 0:
+                return True
+        return False
+
+
+class Assignment():
+    def __init__(self, assignment_id, assignment_name, submissions_json, grades_json):
+        self.uid = assignment_id
+        self.name = assignment_name
+        self.submissions = []
+
+        for submission in submissions_json:
+            grade_json = None
+            user_id = submission['userid']
+            for grade in grades_json:
+                if user_id == grade['userid']:
+                    grade_json = grade
+                    break
+            if 'new' != submission['status']:
+                self.submissions.append(Submission(user_id, grade_json, submission))
+
+    def __repr__(self):
+        return 'Assignment(id={}, name={}, submissions={})'.format(self.uid, self.name, len(self.submissions))
+
+
 def flatten(list_of_lists):
     flat_list = []
     for sublist in list_of_lists:
@@ -88,65 +159,86 @@ def mod_assign_get_submissions(assignment_ids):
 
 def mod_assign_get_grades(assignment_ids):
     """
-    Returns the grades for all the assigments
+    Returns the grades for all the assignments
     """
     url = REQUEST_FORMAT.format('mod_assign_get_grades')
     for i, assignment_id in enumerate(assignment_ids):
         url += '&assignmentids[{}]={}'.format(i, assignment_id)
+    grades = {}
     response = requests.get(url).json()
-    return response
+
+    for grds in response['assignments']:
+        grades[grds['assignmentid']] = grds['grades']
+
+    return grades
 
 
-def ungraded_submissions(course_id, verbose=False):
+def assignments(course_id):
     """
-    Returns the amount of ungraded exercises give a course id
+    Retrieves assignments, grades, and submissions from server and parses into corresponding objects
+    Returns a list of Assignment() objects
     """
-    assigns = mod_assign_get_assignments(course_id)
+    assignment_jsons = mod_assign_get_assignments(course_id)
+    grades = mod_assign_get_grades(assignment_jsons.keys())
+    submissions = mod_assign_get_submissions(assignment_jsons.keys())
+    assigns = []
+
+    for assign in assignment_jsons.keys():
+        assigns.append(Assignment(assign, assignment_jsons[assign], submissions.get(assign, []), grades.get(assign, [])))
+
+    return assigns
+
+
+def download(assignment_name, username, submission, download_folder):
+    """
+    Download the given submission, while creating the appropriate subfolders
+    """
+    # Create subfolders
+    submission_folder = Path(download_folder) \
+                        / Path(assignment_name) \
+                        / Path(username)
+
+    submission_folder.mkdir(parents=True, exist_ok=True)
+
+    for sf in submission.submission_files:
+        # Download the file
+        file_path = submission_folder / Path(sf.url.split('/')[-1])
+        urllib.request.urlretrieve('{}?token={}'.format(sf.url, TOKEN), file_path.as_posix())
+
+
+def download_all(course_id, download_folder):
+    """
+    Downloads all submissions from a given course
+    """
+    assigns = assignments(course_id)
+    users_map = list_students()
+    for assign in assigns:
+        for submission in assign.submissions:
+            download(assign.name, users_map[submission.user_id], submission, download_folder)
+
+
+def ungraded(course_id, verbose=False, download_folder=None):
+    """
+    Returns the amount exercises that need grading for a course
+    If download_folder is set, downloads the ungraded exercises
+    """
+    assigns = assignments(course_id)
+    users_map = list_students()
+    amount = 0
     names = set()
-
-    ungraded = 0
-    for assign_id, subs in mod_assign_get_submissions(assigns.keys()).items():
-        for submission in subs:
-            if 'submitted' == submission['status'] \
-               and 'notgraded' == submission['gradingstatus']:
-                ungraded += 1
-                names.add(assigns[assign_id])
+    for assign in assigns:
+        for submission in assign.submissions:
+            if submission.needs_grading():
+                names.add(assign.name)
+                if download_folder is not None:
+                    download(assign.name, users_map[submission.user_id], submission, download_folder)
+                amount += 1
 
     if verbose:
         for name in names:
             print(name)
-    return ungraded
 
-
-def download_submissions(course_id, folder, download_all=False):
-    """
-    Downloads all the submissions from a specific course into a folder
-    """
-    assigns = mod_assign_get_assignments(course_id)
-    users_map = list_students()
-    for assign_id, subs in mod_assign_get_submissions(assigns.keys()).items():
-        for submission in subs:
-            # Skip ungraded
-            if not 'submitted' == submission['status']:
-                continue
-            if not download_all and not 'notgraded' == submission['gradingstatus']:
-                continue
-
-            for plugin in submission['plugins']:
-                if plugin['type'] == 'file':
-                    for filearea in plugin['fileareas']:
-                        for attachment in filearea['files']:
-                            # Create subfolders
-                            submission_folder = Path(folder) \
-                                                / Path(assigns[assign_id]) \
-                                                / Path(users_map[submission['userid']])
-                            submission_folder.mkdir(parents=True, exist_ok=True)
-
-                            # Download the file
-                            url = attachment['fileurl']
-                            file_path = submission_folder / Path(url.split('/')[-1])
-                            urllib.request.urlretrieve('{}?token={}'.format(url, TOKEN),
-                                                       file_path.as_posix())
+    return amount
 
 
 def main():
@@ -159,15 +251,15 @@ def main():
     parser_ungraded.add_argument('course_id', type=int, help='The course id to query')
     parser_ungraded.add_argument('--verbose', '-v', action='store_true',
                                  help='Prints the names of the ungraded exercises')
+    parser_ungraded.add_argument('--download-folder', '-d',
+                                 help='If specified, the ungraded exercises will be written there')
     parser_ungraded.set_defaults(which='ungraded')
 
     parser_download = subparsers.add_parser('download',
                                             help='download submissions to local folder')
     parser_download.add_argument('course_id', type=int, help='The course id to query')
-    parser_download.add_argument('folder', type=str,
+    parser_download.add_argument('download_folder', type=str,
                                  help='The folder to download the submissions to')
-    parser_download.add_argument('--all', action='store_true',
-                                 help='If specified will download all course submissions')
     parser_download.set_defaults(which='download')
 
     args = parser.parse_args()
@@ -175,9 +267,9 @@ def main():
     if 'none' == args.which:
         parser.print_help()
     elif 'ungraded' == args.which:
-        print("Ungraded: {}".format(ungraded_submissions(args.course_id, verbose=args.verbose)))
+        print("Ungraded: {}".format(ungraded(args.course_id, verbose=args.verbose, download_folder=args.download_folder)))
     elif 'download' == args.which:
-        download_submissions(args.course_id, args.folder, args.all)
+        download_all(args.course_id, args.download_folder)
 
 if '__main__' == __name__:
     main()
