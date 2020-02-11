@@ -290,34 +290,19 @@ def feedbacks(course_id):
     return fbs
 
 
-def export_feedback(feedback, folder):
-    """
-    Export a feedback to a folder in csv format
-    """
-    file_path = Path(folder) / Path(feedback.name)
-    with open(str(file_path) + '.csv', 'w', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow(feedback.questions)
-        writer.writerows(feedback.responses)
-
-
-def export_feedbacks(course_id, folder, latest=False):
+def export_feedbacks(course_id, folder):
     """
     Exports the feedbacks of a course, in csv format, to a speicifed folder.
-    Only exports the latest one if latest parameter it True
     """
-    last = None
-
     for feedback in feedbacks(course_id):
         if feedback.responses_count == 0:
-            if latest:
-                if last is None:
-                    print("Error: no feedbacks to export")
-                export_feedback(last, folder)
+            # Stop if reached a feedback that wasn't filled yet
             return
-        last = feedback
-        if not latest:
-            export_feedback(feedback, folder)
+        file_path = Path(folder) / Path(feedback.name)
+        with open(str(file_path) + '.csv', 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(feedback.questions)
+            writer.writerows(feedback.responses)
 
 
 def main():
@@ -346,8 +331,6 @@ def main():
     parser_feedbacks.add_argument('course_id', type=int, help='The course id to query')
     parser_feedbacks.add_argument('download_folder', type=str,
                                   help='The folder to export to')
-    parser_feedbacks.add_argument('--latest', '-l', action='store_true',
-                                  help='If set, exports only the latest feedback')
     parser_feedbacks.set_defaults(which='feedbacks')
 
     args = parser.parse_args()
@@ -359,7 +342,7 @@ def main():
     elif 'download' == args.which:
         download_all(args.course_id, args.download_folder)
     elif 'feedbacks' == args.which:
-        export_feedbacks(args.course_id, args.download_folder, args.latest)
+        export_feedbacks(args.course_id, args.download_folder)
 
 if '__main__' == __name__:
     main()
