@@ -5,6 +5,15 @@ and downloads student submissions
 To use, you need to create a web service user and enroll it in the module
 Follow the instructions at http://<MOODLE IP>/admin/category.php?category=webservicesettings
 
+Add the following functions:
+    mod_feedback_get_analysis
+    mod_feedback_get_feedbacks_by_courses
+    mod_assign_get_grades
+    mod_assign_get_submissions
+    mod_assign_get_assignments
+    core_user_get_users
+    core_course_get_courses
+
 The moodle API documentation can be found at http://192.168.10.158/admin/webservice/documentation.php
 
 After following the instructions and enrolling the new user, edit the following variables below:
@@ -19,6 +28,7 @@ import requests
 from pathlib import Path
 import urllib.request
 import argparse
+import csv
 
 
 TOKEN = '53e2cd85d463774b6b4dc67e485ca61e'
@@ -98,15 +108,25 @@ class Assignment():
         return 'Assignment(id={}, name={}, submissions={})'.format(self.uid, self.name, len(self.submissions))
 
 
-def flatten(list_of_lists):
-    flat_list = []
-    for sublist in list_of_lists:
-        for item in sublist:
-            flat_list.append(item)
-    return flat_list
+class Feedback():
+    def __init__(self, uid, name, answers_json):
+        self.uid = uid
+        self.name = name
+        self.responses_count = answers_json['completedcount']
+        self.questions = set()
+
+        self.responses = [[] for i in range(self.responses_count)]
+
+        for question in answers_json['itemsdata']:
+            self.questions.add(question['item']['name'])
+            for i, answer in enumerate(question['data']):
+                self.responses[i].append(answer)
+
+    def __repr__(self):
+        return 'Feedback(uid={}, name={}, answers={})'.format(self.uid, self.name, self.responses_count)
 
 
-def list_students():
+def core_user_get_users():
     """
     Returns a map linking the id of all users to their full name
     """
@@ -173,6 +193,24 @@ def mod_assign_get_grades(assignment_ids):
     return grades
 
 
+def mod_feedback_get_feedbacks_by_courses(course_id):
+    """
+    Retrieves all feedbacks for a given course
+    """
+    return requests.get(REQUEST_FORMAT.format(
+        'mod_feedback_get_feedbacks_by_courses') + '&courseids[0]=88'
+    ).json()['feedbacks']
+
+
+def mod_feedback_get_analysis(feedback_id):
+    """
+    Retrieves the responses for the given feedback id
+    """
+    return requests.get(REQUEST_FORMAT.format(
+        'mod_feedback_get_analysis') + '&feedbackid={}'.format(feedback_id)
+    ).json()
+
+
 def assignments(course_id):
     """
     Retrieves assignments, grades, and submissions from server and parses into corresponding objects
@@ -211,7 +249,7 @@ def download_all(course_id, download_folder):
     Downloads all submissions from a given course
     """
     assigns = assignments(course_id)
-    users_map = list_students()
+    users_map = core_user_get_users()
     for assign in assigns:
         for submission in assign.submissions:
             download(assign.name, users_map[submission.user_id], submission, download_folder)
@@ -223,7 +261,7 @@ def ungraded(course_id, verbose=False, download_folder=None):
     If download_folder is set, downloads the ungraded exercises
     """
     assigns = assignments(course_id)
-    users_map = list_students()
+    users_map = core_user_get_users()
     amount = 0
     names = set()
     for assign in assigns:
@@ -239,6 +277,47 @@ def ungraded(course_id, verbose=False, download_folder=None):
             print(name)
 
     return amount
+
+
+def feedbacks(course_id):
+    """
+    Retrieve the feedbacks for a given course
+    """
+    fbs = []
+    for feedback in mod_feedback_get_feedbacks_by_courses(course_id):
+        answers = mod_feedback_get_analysis(feedback['id'])
+        fbs.append(Feedback(feedback['id'], feedback['name'], answers))
+    return fbs
+
+
+def export_feedback(feedback, folder):
+    """
+    Export a feedback to a folder in csv format
+    """
+    file_path = Path(folder) / Path(feedback.name)
+    with open(str(file_path) + '.csv', 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(feedback.questions)
+        writer.writerows(feedback.responses)
+
+
+def export_feedbacks(course_id, folder, latest=False):
+    """
+    Exports the feedbacks of a course, in csv format, to a speicifed folder.
+    Only exports the latest one if latest parameter it True
+    """
+    last = None
+
+    for feedback in feedbacks(course_id):
+        if feedback.responses_count == 0:
+            if latest:
+                if last is None:
+                    print("Error: no feedbacks to export")
+                export_feedback(last, folder)
+            return
+        last = feedback
+        if not latest:
+            export_feedback(feedback, folder)
 
 
 def main():
@@ -262,6 +341,15 @@ def main():
                                  help='The folder to download the submissions to')
     parser_download.set_defaults(which='download')
 
+    parser_feedbacks = subparsers.add_parser('feedbacks',
+                                             help='Exports the feedbacks for a course')
+    parser_feedbacks.add_argument('course_id', type=int, help='The course id to query')
+    parser_feedbacks.add_argument('download_folder', type=str,
+                                  help='The folder to export to')
+    parser_feedbacks.add_argument('--latest', '-l', action='store_true',
+                                  help='If set, exports only the latest feedback')
+    parser_feedbacks.set_defaults(which='feedbacks')
+
     args = parser.parse_args()
 
     if 'none' == args.which:
@@ -270,6 +358,8 @@ def main():
         print("Ungraded: {}".format(ungraded(args.course_id, verbose=args.verbose, download_folder=args.download_folder)))
     elif 'download' == args.which:
         download_all(args.course_id, args.download_folder)
+    elif 'feedbacks' == args.which:
+        export_feedbacks(args.course_id, args.download_folder, args.latest)
 
 if '__main__' == __name__:
     main()
