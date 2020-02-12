@@ -89,11 +89,13 @@ class Submission():
 
 
 class Assignment():
-    def __init__(self, assignment_id, assignment_name, submissions_json, grades_json):
-        self.uid = assignment_id
-        self.name = assignment_name
-        self.submissions = []
+    def __init__(self, assignment_json, submissions_json, grades_json):
+        self.uid = assignment_json['id']
+        self.name = assignment_json['name']
+        self.description = assignment_json['intro']
+        self.attachments = [attachment['fileurl'] for attachment in assignment_json['introattachments']]
 
+        self.submissions = []
         for submission in submissions_json:
             grade_json = None
             user_id = submission['userid']
@@ -103,6 +105,10 @@ class Assignment():
                     break
             if 'new' != submission['status']:
                 self.submissions.append(Submission(user_id, grade_json, submission))
+
+        self._assignment_json = assignment_json
+        self._submissions_json = submissions_json
+        self._grades_json = grades_json
 
     def __repr__(self):
         return 'Assignment(id={}, name={}, submissions={})'.format(self.uid, self.name, len(self.submissions))
@@ -124,6 +130,14 @@ class Feedback():
 
     def __repr__(self):
         return 'Feedback(uid={}, name={}, answers={})'.format(self.uid, self.name, self.responses_count)
+
+
+def download_file(url, folder):
+    file_name = url.split('/')[-1]
+    if -1 != file_name.find('?'):
+        file_name = file_name.split('?')[0]
+    file_path = Path(folder) / Path(file_name)
+    urllib.request.urlretrieve('{}?token={}'.format(url, TOKEN), file_path.as_posix())
 
 
 def core_user_get_users():
@@ -154,10 +168,16 @@ def mod_assign_get_assignments(course_id):
     """
     response = requests.get(
         REQUEST_FORMAT.format('mod_assign_get_assignments') + '&courseids[0]={}'.format(course_id))
-    assigns = {}
-    for assign in response.json()["courses"][0]["assignments"]:
-        assigns[assign['id']] = assign['name']
-    return assigns
+
+    return response.json()["courses"][0]["assignments"]
+
+
+def core_course_get_contents(course_id):
+    """
+    Returns the structure of the course with all resources and topics
+    """
+    return requests.get(REQUEST_FORMAT.format('core_course_get_contents')
+                        + '&courseid={}'.format(course_id)).json()
 
 
 def mod_assign_get_submissions(assignment_ids):
@@ -217,12 +237,14 @@ def assignments(course_id):
     Returns a list of Assignment() objects
     """
     assignment_jsons = mod_assign_get_assignments(course_id)
-    grades = mod_assign_get_grades(assignment_jsons.keys())
-    submissions = mod_assign_get_submissions(assignment_jsons.keys())
+    assignment_ids = [assign['id'] for assign in assignment_jsons]
+
+    grades = mod_assign_get_grades(assignment_ids)
+    submissions = mod_assign_get_submissions(assignment_ids)
     assigns = []
 
-    for assign in assignment_jsons.keys():
-        assigns.append(Assignment(assign, assignment_jsons[assign], submissions.get(assign, []), grades.get(assign, [])))
+    for assign in assignment_jsons:
+        assigns.append(Assignment(assign, submissions.get(assign['id'], []), grades.get(assign['id'], [])))
 
     return assigns
 
@@ -240,19 +262,7 @@ def download(assignment_name, username, submission, download_folder):
 
     for sf in submission.submission_files:
         # Download the file
-        file_path = submission_folder / Path(sf.url.split('/')[-1])
-        urllib.request.urlretrieve('{}?token={}'.format(sf.url, TOKEN), file_path.as_posix())
-
-
-def download_all(course_id, download_folder):
-    """
-    Downloads all submissions from a given course
-    """
-    assigns = assignments(course_id)
-    users_map = core_user_get_users()
-    for assign in assigns:
-        for submission in assign.submissions:
-            download(assign.name, users_map[submission.user_id], submission, download_folder)
+        download_file(sf.url, submission_folder)
 
 
 def ungraded(course_id, verbose=False, download_folder=None):
@@ -290,6 +300,17 @@ def feedbacks(course_id):
     return fbs
 
 
+def export_submissions(course_id, download_folder):
+    """
+    Downloads all submissions from a given course
+    """
+    assigns = assignments(course_id)
+    users_map = core_user_get_users()
+    for assign in assigns:
+        for submission in assign.submissions:
+            download(assign.name, users_map[submission.user_id], submission, download_folder)
+
+
 def export_feedbacks(course_id, folder):
     """
     Exports the feedbacks of a course, in csv format, to a speicifed folder.
@@ -303,6 +324,43 @@ def export_feedbacks(course_id, folder):
             writer = csv.writer(f)
             writer.writerow(feedback.questions)
             writer.writerows(feedback.responses)
+
+
+def export_materials(course_id, folder):
+    """
+    Downloads all the materials from a course to a given folder
+    """
+    # Put assignments into a dict to find easily
+    assigns = {assign.uid:assign for assign in assignments(course_id)}
+    sections = core_course_get_contents(course_id)
+
+    created = set()
+
+    for section in sections:
+        section_folder = Path(folder) / Path(section['name'])
+        for module in section['modules']:
+            # Create section folder
+            if module['modname'] in ['feedback', 'forum']:
+                continue
+            elif module['modname'] == 'resource':
+                if section['name'] not in created:
+                    section_folder.mkdir(parents=True, exist_ok=True)
+                    created.add(section['name'])
+                # If module is a resource - download it
+                for resource in module['contents']:
+                    download_file(resource['fileurl'], section_folder)
+            elif module['modname'] == 'assign':
+                if section['name'] not in created:
+                    section_folder.mkdir(parents=True, exist_ok=True)
+                    created.add(section['name'])
+                # If module is an assignment - download attachments and description
+                assign = assigns[module['instance']]
+                if len(assign.description) > 0:
+                    description_file = section_folder / Path(assign.name).with_suffix('.txt')
+                    with open(description_file, 'w') as f:
+                        f.write(assign.description)
+                for attachment in assign.attachments:
+                    download_file(attachment, section_folder)
 
 
 def main():
@@ -333,6 +391,13 @@ def main():
                                   help='The folder to export to')
     parser_feedbacks.set_defaults(which='feedbacks')
 
+    parser_materials = subparsers.add_parser('materials',
+                                             help='Exports all of the materials of a course')
+    parser_materials.add_argument('course_id', type=int, help='The course id to query')
+    parser_materials.add_argument('download_folder', type=str,
+                                  help='The folder to export to')
+    parser_materials.set_defaults(which='materials')
+
     args = parser.parse_args()
 
     if 'none' == args.which:
@@ -343,6 +408,8 @@ def main():
         download_all(args.course_id, args.download_folder)
     elif 'feedbacks' == args.which:
         export_feedbacks(args.course_id, args.download_folder)
+    elif 'materials' == args.which:
+        export_materials(args.course_id, args.download_folder)
 
 if '__main__' == __name__:
     main()
