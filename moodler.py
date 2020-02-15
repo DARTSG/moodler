@@ -11,7 +11,7 @@ Add the following functions:
     mod_assign_get_grades
     mod_assign_get_submissions
     mod_assign_get_assignments
-    core_user_get_users
+    core_enrol_get_enrolled_users
     core_course_get_courses
 
 The moodle API documentation can be found at http://192.168.10.158/admin/webservice/documentation.php
@@ -50,7 +50,7 @@ class SubmissionFile():
 class Grade():
     def __init__(self, grade_json):
         self.timestamp = grade_json['timemodified']
-        self.grade = grade_json['grade']
+        self.grade = float(grade_json['grade'])
         self._json_data = grade_json
 
     def __repr__(self):
@@ -140,18 +140,24 @@ def download_file(url, folder):
     urllib.request.urlretrieve('{}?token={}'.format(url, TOKEN), file_path.as_posix())
 
 
-def core_user_get_users():
+def core_enrol_get_enrolled_users(course_id):
     """
-    Returns a map linking the id of all users to their full name
+    Get enrolled users by course id
     """
-    response = requests.get(REQUEST_FORMAT.format('core_user_get_users')
-                            + '&criteria[0][key]=email&criteria[0][value]=%%')
+    response = requests.get(REQUEST_FORMAT.format('core_enrol_get_enrolled_users')
+                            + '&courseid={}'.format(course_id))
+    return response.json()
 
-    # Create users map
-    users_map = {}
-    for user in response.json()['users']:
-        users_map[user['id']] = user['firstname'] + ' ' + user['lastname']
-    return users_map
+
+def students(course_id):
+    """
+    Get only the students enrolled in a course
+    """
+    enrolled_students = {}
+    for enrolled in core_enrol_get_enrolled_users(course_id):
+        if enrolled['roles'][0]['shortname'] == 'student':
+            enrolled_students[enrolled['id']] = enrolled['fullname']
+    return enrolled_students
 
 
 def core_course_get_courses():
@@ -271,7 +277,7 @@ def ungraded(course_id, verbose=False, download_folder=None):
     If download_folder is set, downloads the ungraded exercises
     """
     assigns = assignments(course_id)
-    users_map = core_user_get_users()
+    users_map = students(course_id)
     amount = 0
     names = set()
     for assign in assigns:
@@ -305,7 +311,7 @@ def export_submissions(course_id, download_folder):
     Downloads all submissions from a given course
     """
     assigns = assignments(course_id)
-    users_map = core_user_get_users()
+    users_map = students(course_id)
     for assign in assigns:
         for submission in assign.submissions:
             download(assign.name, users_map[submission.user_id], submission, download_folder)
@@ -363,6 +369,42 @@ def export_materials(course_id, folder):
                     download_file(attachment, section_folder)
 
 
+def export_grades(course_id, folder):
+    """
+    Exports the complete grade file to the given folder in csv format
+    """
+    users_map = students(course_id)
+    usernames = list(users_map.values())
+    grades = [[] for i in usernames]
+    exercise_names = []
+
+    # Build a structure of {'exercise': {'student': grade, 'student2': grade}}
+    for assign in assignments(course_id):
+        exercise_names.append(assign.name)
+        students_not_submitted = list(usernames)
+        for submission in assign.submissions:
+            grades[usernames.index(users_map[submission.user_id])].append(submission.grade.grade if submission.grade else 0)
+            students_not_submitted.remove(users_map[submission.user_id])
+        # Just grade users that did not submit an assignment with a 0
+        for student in students_not_submitted:
+            grades[usernames.index(student)].append(0)
+
+    with open(Path(folder) / 'Grades.csv', 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(['Student Name'] + exercise_names + ['Total'])
+        for i, row in enumerate(grades):
+            writer.writerow([usernames[i]] + row + [sum(row)])
+
+
+def export_all(course_id, folder):
+    """
+    Exports submissions, materials, and grades for the given course
+    """
+    export_grades(course_id, folder)
+    export_materials(course_id, Path(folder) / 'Materials')
+    export_submissions(course_id, Path(folder) / 'Submissions')
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.set_defaults(which='none')
@@ -377,13 +419,6 @@ def main():
                                  help='If specified, the ungraded exercises will be written there')
     parser_ungraded.set_defaults(which='ungraded')
 
-    parser_download = subparsers.add_parser('download',
-                                            help='download submissions to local folder')
-    parser_download.add_argument('course_id', type=int, help='The course id to query')
-    parser_download.add_argument('download_folder', type=str,
-                                 help='The folder to download the submissions to')
-    parser_download.set_defaults(which='download')
-
     parser_feedbacks = subparsers.add_parser('feedbacks',
                                              help='Exports the feedbacks for a course')
     parser_feedbacks.add_argument('course_id', type=int, help='The course id to query')
@@ -391,12 +426,12 @@ def main():
                                   help='The folder to export to')
     parser_feedbacks.set_defaults(which='feedbacks')
 
-    parser_materials = subparsers.add_parser('materials',
-                                             help='Exports all of the materials of a course')
-    parser_materials.add_argument('course_id', type=int, help='The course id to query')
-    parser_materials.add_argument('download_folder', type=str,
+    parser_export = subparsers.add_parser('export',
+                                             help='Exports submissions, materials, and grades for a course')
+    parser_export.add_argument('course_id', type=int, help='The course id to query')
+    parser_export.add_argument('download_folder', type=str,
                                   help='The folder to export to')
-    parser_materials.set_defaults(which='materials')
+    parser_export.set_defaults(which='export')
 
     args = parser.parse_args()
 
@@ -404,12 +439,10 @@ def main():
         parser.print_help()
     elif 'ungraded' == args.which:
         print("Ungraded: {}".format(ungraded(args.course_id, verbose=args.verbose, download_folder=args.download_folder)))
-    elif 'download' == args.which:
-        download_all(args.course_id, args.download_folder)
     elif 'feedbacks' == args.which:
         export_feedbacks(args.course_id, args.download_folder)
-    elif 'materials' == args.which:
-        export_materials(args.course_id, args.download_folder)
+    elif 'export' == args.which:
+        export_all(args.course_id, args.download_folder)
 
 if '__main__' == __name__:
     main()
