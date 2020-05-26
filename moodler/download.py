@@ -30,20 +30,18 @@ def generate_assignment_folder_path(assignment_name, username, download_folder, 
     return submission_folder
 
 
-# def download_submission(assignment_name, username, submission, download_folder, priority=None):
-#     """
-#     Download the given submission, while creating the appropriate subfolders
-#     """
-#     # TODO: Where does username come from?
-#     username = USER_MAP[submission['userid']]
-#     # Create subfolders
-#     submission_folder = generate_assignment_folder_path(assignment_name, username, download_folder, priority)
-#
-#     submission_folder.mkdir(parents=True, exist_ok=True)
-#
-#     for sf in submission.submission_files:
-#         # Download the file
-#         download_file(sf.url, submission_folder)
+def download_submission(assignment_name, username, submission, download_folder, priority=None):
+    """
+    Download the given submission, while creating the appropriate subfolders
+    """
+    # Create subfolders
+    submission_folder = generate_assignment_folder_path(assignment_name, username, download_folder, priority)
+
+    submission_folder.mkdir(parents=True, exist_ok=True)
+
+    for sf in submission.submission_files:
+        # Download the file
+        download_file(sf.url, submission_folder)
 
 
 def download_all_submissions(assignment_id,
