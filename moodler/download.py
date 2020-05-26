@@ -1,8 +1,8 @@
 from pathlib import Path
 import urllib.request
 
-from moodler import SESSION
-from moodler.config import TOKEN, USER_MAP, URL
+from moodler.moodler import SESSION
+from moodler.moodler.config import TOKEN, USER_MAP, URL
 
 
 ASSIGNMENT_WORKSHEET_EXT = '.csv'

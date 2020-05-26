@@ -12,7 +12,7 @@ API directly from the web interface.
 import re
 import requests
 
-from moodler.config import URL, LOGIN_PAGE
+from moodler.moodler.config import URL, LOGIN_PAGE
 
 
 LOGIN_TOKEN_PATTERN = r'name="logintoken" value="([\w\d]+)"'

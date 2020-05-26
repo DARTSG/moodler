@@ -1,6 +1,6 @@
 import requests
 
-from moodler.consts import REQUEST_FORMAT
+from moodler.moodler .consts import REQUEST_FORMAT
 
 
 class Grade(object):

@@ -1,6 +1,20 @@
 import requests
 
-from moodler.consts import REQUEST_FORMAT
+from moodler.moodler.consts import REQUEST_FORMAT
+from moodler.moodler.config import COURSE_PREFIX
+
+
+class Course(object):
+    def __init__(self, course_id, full_name, short_name):
+        self.course_id = course_id
+        self.full_name = full_name
+        self.short_name = short_name
+
+    def __repr__(self):
+        return 'Course(courde_id={}, full_name={}, short_name={})'.format(
+            self.course_id,
+            self.full_name,
+            self.short_name)
 
 
 def core_enrol_get_enrolled_users(course_id):
@@ -59,3 +73,23 @@ def get_user_name(user_id):
         REQUEST_FORMAT.format('core_user_get_users_by_field') + '&field=id&values[0]={}'.format(user_id))
     response_json = response.json()[0]
     return response_json['firstname'] + ' ' + response_json['lastname']
+
+
+def list_courses(course_prefix):
+    """
+    Create a list of all the courses in the moodle.
+    :return: Returns a list of courses objects.
+    """
+    courses_list = []
+    courses_from_moodle = core_course_get_courses()
+
+    for course in courses_list:
+        if ((course_prefix not in course['shortname']) and
+                (course_prefix not in course['fullname'])):
+            continue
+
+        courses_from_moodle.append(Course(course['id'],
+                                          course['shortname'],
+                                          course['fullname']))
+
+    return courses_list

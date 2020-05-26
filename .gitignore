@@ -1,3 +1,9 @@
-/venv
-.idea
+# Project paths
+/venv/*
+.idea/*
+
+# Python cache files
+__pycache__/*
+**/__pycache__/*
+
 *.swp

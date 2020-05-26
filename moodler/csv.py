@@ -2,7 +2,7 @@ import logging
 import os
 import csv
 
-from moodler.config import STUDENTS_TO_IGNORE
+from moodler.moodler.config import STUDENTS_TO_IGNORE
 
 logger = logging.getLogger(__name__)
 

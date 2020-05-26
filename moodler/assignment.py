@@ -1,8 +1,8 @@
 import requests
 
-from moodler.consts import REQUEST_FORMAT
-from moodler.students import core_course_get_contents
-from moodler.submission import Submission, mod_assign_get_submissions
+from moodler.moodler.consts import REQUEST_FORMAT
+from moodler.moodler.students import core_course_get_contents
+from moodler.moodler.submission import Submission, mod_assign_get_submissions
 
 
 class InvalidAssignmentID(Exception):
@@ -105,8 +105,8 @@ def get_assignment_files(course_id, assignment_id):
     if assignment is None:
         raise InvalidAssignmentID()
 
-    for attachment in assignment[0]['introattachments']:
-        assignment_files.append(attachment['fileurl'])
+    for attachment in assignment[0].attachments:
+        assignment_files.append(attachment)
 
     return assignment_files
 
@@ -115,7 +115,7 @@ def get_assignments_details(course_id, assignments_list):
     """
     Returns a dictionary with a tuple for every assignment name in the list
     received that looks like this: (assignment_id, assignment_section)
-    :param course_id: The ID of the course to retrieve the assigments from.
+    :param course_id: The ID of the course to retrieve the assignments from.
     :param assignments_list: List of assignments names to retrieve their data.
     :return: Dictionary of (assignment_id, assignment_section) for every
     assignment.
@@ -139,7 +139,7 @@ def get_assignments_details(course_id, assignments_list):
                 continue
 
             # Retrieve all the assignment files
-            assignment_files = get_assignment_files(module['id'])
+            assignment_files = get_assignment_files(course_id, module['id'])
 
             # Adding the results to the dictionary of assignments we are
             # crafting for the caller

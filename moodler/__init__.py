@@ -1,5 +1,5 @@
-from moodler.moodle_connect import connect_to_server
-from moodler.config import USERNAME, PASSWORD
+from moodler.moodler.moodle_connect import connect_to_server
+from config import USERNAME, PASSWORD
 
 __all__ = ["SESSION"]
 
