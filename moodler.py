@@ -50,7 +50,10 @@ class SubmissionFile():
 class Grade():
     def __init__(self, grade_json):
         self.timestamp = grade_json['timemodified']
-        self.grade = float(grade_json['grade'])
+        if len(grade_json['grade']) == 0:
+            self.grade = 0
+        else:
+            self.grade = float(grade_json['grade'])
         self._json_data = grade_json
 
     def __repr__(self):
