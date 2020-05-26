@@ -227,7 +227,7 @@ def mod_feedback_get_feedbacks_by_courses(course_id):
     Retrieves all feedbacks for a given course
     """
     return requests.get(REQUEST_FORMAT.format(
-        'mod_feedback_get_feedbacks_by_courses') + '&courseids[0]=88'
+        'mod_feedback_get_feedbacks_by_courses') + '&courseids[0]={}'.format(course_id)
     ).json()['feedbacks']
 
 
