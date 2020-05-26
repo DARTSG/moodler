@@ -23,6 +23,8 @@ URL
 Ooh, and use python3 to run this
 and install requests package
 """
+import logging
+from pprint import pprint
 
 import requests
 from pathlib import Path
@@ -31,27 +33,31 @@ import argparse
 import csv
 
 from moodler.assignment import get_assignments
-from moodler.download import download, download_file
+from moodler.config import STUDENTS_TO_IGNORE
+from moodler.download import download_file, download_submission
 from moodler.feedbacks import feedbacks
-from moodler.students import get_students, core_course_get_contents
+from moodler.students import get_students, core_course_get_contents, list_students
+
+logger = logging.getLogger(__name__)
 
 
-TOKEN = '53e2cd85d463774b6b4dc67e485ca61e'
-URL = 'http://192.168.10.158'
+def setup_logging():
+    logging.basicConfig(format='%(levelname)s - %(message)s', level=logging.INFO)
 
 
-def ungraded_submissions(course_id, verbose=False, download_folder=None):
+def ungraded_submissions(course_id, is_verbose=False, download_folder=None):
     """
     Returns the amount exercises that need grading for a course.
 
     If download_folder is set, downloads the ungraded exercises
     """
+    logger.info("Showing ungraded submissions for course %s", course_id)
+    total_ungraded = 0
+
     assignments = get_assignments(course_id)
     users_map = get_students(course_id)
-    amount = 0
-    names = set()
     for assignment in assignments:
-        ungraded = 0
+        assignment.num_of_ungraded = 0
         # List of student names whose submissions were ignored
         ungraded_ignored = []
         # Count total number of submissions to this exercise
@@ -60,18 +66,30 @@ def ungraded_submissions(course_id, verbose=False, download_folder=None):
             # Track number of submissions made
             if submission.submitted:
                 total_submissions += 1
-            # Di
+
+            # Process ungraded submission
             if submission.needs_grading():
-                names.add(assignment.name)
+                # Check if it's a student to ignore
+                student_id = submission.user_id
+                if student_id in STUDENTS_TO_IGNORE.keys():
+                    ungraded_ignored.append(STUDENTS_TO_IGNORE[student_id])
+                else:
+                    assignment.num_of_ungraded += 1
+                # TODO: Improve with 'attemptnumber' field, to check "== 0" for new submissions only, or resubmissions
+
                 if download_folder is not None:
-                    download(assignment.name, users_map[submission.user_id], submission, download_folder)
-                amount += 1
+                    download_submission(assignment.name, users_map[submission.user_id], submission, download_folder)
 
-    if verbose:
-        for name in names:
-            print(name)
+        # Print total stats about this assignment
+        if is_verbose and len(ungraded_ignored) != 0:
+            logger.info("Ignored %s submissions for assignment '%s' (CMID %s, ID %s): %s", len(ungraded_ignored),
+                        assignment.name, assignment.cmid, assignment.uid, ungraded_ignored)
+        if assignment.num_of_ungraded != 0:
+            logger.info("Total ungraded for assignment '%s' (CMID %s, ID %s): %s/%s", assignment.name,
+                        assignment.cmid, assignment.uid, assignment.num_of_ungraded, total_submissions)
+        total_ungraded += assignment.num_of_ungraded
 
-    return amount
+    return total_ungraded
 
 
 def export_feedbacks(course_id, folder):
@@ -173,7 +191,7 @@ def export_all(course_id, folder):
     export_submissions(course_id, Path(folder) / 'Submissions')
 
 
-def main():
+def parse_args():
     parser = argparse.ArgumentParser()
     parser.set_defaults(which='none')
     subparsers = parser.add_subparsers()
@@ -199,14 +217,28 @@ def main():
     parser_export.add_argument('course_id', type=int, help='The course id to query')
     parser_export.add_argument('download_folder', type=str,
                                   help='The folder to export to')
-    parser_export.set_defaults(which='export')
+
+    parser_list_students = subparsers.add_parser('list_students',
+                                                 help='List names of all students')
+    parser_list_students.add_argument('course_id', type=int, help='The course id to query')
+    parser_list_students.set_defaults(which='list_students')
+    # parser_export.set_defaults(which='export')
 
     args = parser.parse_args()
+    return args, parser
+
+
+def main():
+    setup_logging()
+
+    args, parser = parse_args()
 
     if 'none' == args.which:
         parser.print_help()
     elif 'ungraded' == args.which:
-        print("Ungraded: {}".format(ungraded_submissions(args.course_id, verbose=args.verbose, download_folder=args.download_folder)))
+        print("Ungraded: {}".format(ungraded_submissions(args.course_id, is_verbose=args.verbose, download_folder=args.download_folder)))
+    elif args.which == 'list_students':
+        pprint(get_students(args.course_id))
     elif 'feedbacks' == args.which:
         export_feedbacks(args.course_id, args.download_folder)
     elif 'export' == args.which:

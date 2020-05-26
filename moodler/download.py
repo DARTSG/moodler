@@ -1,7 +1,12 @@
 from pathlib import Path
 import urllib.request
 
-from moodler.config import TOKEN, USER_MAP
+from moodler import SESSION
+from moodler.config import TOKEN, USER_MAP, URL
+
+
+ASSIGNMENT_WORKSHEET_EXT = '.csv'
+ASSIGNMENT_ALL_SUBMISSIONS_EXT = '.zip'
 
 
 def download_file(url, folder):
@@ -39,4 +44,74 @@ def download_submission(assignment_name, username, submission, download_folder, 
     for sf in submission.submission_files:
         # Download the file
         download_file(sf.url, submission_folder)
+
+
+def download_all_submissions(assignment_id,
+                             assignment_name,
+                             output_path,
+                             session=SESSION):
+    """
+    Download all submissions ZIP from the Moodle using the session created.
+    :param assignment_id: The ID of the submission to download.
+    :param assignment_name: The name of the assignment to use for the name of
+    the ZIP downloaded from Moodle.
+    :param output_path: The path in which to saved the downloaded file.
+    :param session: The session through which to send the get request to
+    download the file.
+    :return:
+    """
+    # TODO: doesn't work yet, have to develop a web service that does this
+    # Build the get request.
+    params = {
+        'id': assignment_id,
+        'action': 'downloadall'
+    }
+    response = session.get(URL + '/mod/assign/view.php', params=params)
+
+    # TODO: Raise an exception in case the file download failed
+
+    all_submissions_file_name = \
+        Path(output_path) / Path(assignment_name + ASSIGNMENT_ALL_SUBMISSIONS_EXT)
+
+    # Writing the content from the get response into a file.
+    with all_submissions_file_name.open(mode='wb') as all_submissions_file:
+        all_submissions_file.write(response.content)
+
+    return all_submissions_file_name
+
+
+def download_grading_worksheet(assignment_id,
+                               assignment_name,
+                               output_path,
+                               session=SESSION):
+    """
+    Download the grading sheet from the Moodle using the session created.
+
+    :param assignment_id: The ID of the grading sheet to download.
+    :param assignment_name: The name of the assignment to use for the name of
+    the grading sheet.
+    :param output_path: The path in which to saved the downloaded file.
+    :param session: The session through which to send the get request to
+    download the file.
+    :return:
+    """
+    # TODO: doesn't work yet, have to develop a web service that does this
+    params = {
+        'id': assignment_id,
+        'plugin': 'offline',
+        'pluginsubtype': 'assignfeedback',
+        'action': 'viewpluginpage',
+        'pluginaction': 'downloadgrades'
+    }
+    response = session.get(URL + '/mod/assign/view.php', params=params)
+
+    # TODO: Raise an exception in case the file download failed
+
+    grading_worksheet_file_name = \
+        Path(output_path) / Path(assignment_name + ASSIGNMENT_WORKSHEET_EXT)
+
+    with grading_worksheet_file_name.open(mode='wb') as grading_worksheet_file:
+        grading_worksheet_file.write(response.content)
+
+    return grading_worksheet_file_name
 

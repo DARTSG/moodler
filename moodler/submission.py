@@ -47,8 +47,12 @@ class Submission(object):
     def needs_grading(self):
         if not self.submitted:
             return False
-        if 'notgraded' == self.gradingstatus:
+
+        if 'graded' == self.gradingstatus:
+            return False
+        elif 'notgraded' == self.gradingstatus:
             return True
+
         if self.grade is not None and self.grade.timestamp - max([sf.timestamp for sf in self.submission_files]) < 0:
             return True
 

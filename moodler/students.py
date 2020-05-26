@@ -39,6 +39,21 @@ def get_students(course_id):
     return enrolled_students
 
 
+def list_students():
+    """
+    More generic than get_students, and includes all lists enrolled in the system. This is kept for debugging/backward
+    compatibility, you should work with get_students instead.
+    """
+    response = requests.get(
+        REQUEST_FORMAT.format('core_user_get_users') + '&criteria[0][key]=email&criteria[0][value]=%%')
+
+    # Create users map
+    users_map = {}
+    for user in response.json()['users']:
+        users_map[user['id']] = user['firstname'] + ' ' + user['lastname']
+    return users_map
+
+
 def get_user_name(user_id):
     response = requests.get(
         REQUEST_FORMAT.format('core_user_get_users_by_field') + '&field=id&values[0]={}'.format(user_id))
