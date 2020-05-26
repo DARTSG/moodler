@@ -7,6 +7,7 @@ TOKEN = '6932c6a583c1200d303d97109e4d7fec'
 URL = 'http://192.168.1.55'
 DEFAULT_DOWNLOAD_DIR = r'/home/almog/AlmogDrive/AlmogLocal/Work/DART/Course/ExercisesForShlomo/25032020/Before'
 
+LOGIN_PAGE = 'login/index.php'
 USERNAME = 'almog'
 PASSWORD = 'Csi@1234'
 
