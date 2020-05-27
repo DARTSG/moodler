@@ -1,12 +1,11 @@
 import requests
 
 from moodler.moodler.consts import REQUEST_FORMAT
-from moodler.moodler.config import COURSE_PREFIX
 
 
 class Course(object):
     def __init__(self, course_id, full_name, short_name):
-        self.course_id = course_id
+        self.id = course_id
         self.full_name = full_name
         self.short_name = short_name
 
@@ -83,13 +82,13 @@ def list_courses(course_prefix):
     courses_list = []
     courses_from_moodle = core_course_get_courses()
 
-    for course in courses_list:
+    for course in courses_from_moodle:
         if ((course_prefix not in course['shortname']) and
                 (course_prefix not in course['fullname'])):
             continue
 
-        courses_from_moodle.append(Course(course['id'],
-                                          course['shortname'],
-                                          course['fullname']))
+        courses_list.append(Course(course['id'],
+                                   course['shortname'],
+                                   course['fullname']))
 
     return courses_list
