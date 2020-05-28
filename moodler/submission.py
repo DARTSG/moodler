@@ -80,3 +80,19 @@ def mod_assign_get_submissions(assignment_ids):
     for assign in response.json()['assignments']:
         submissions[assign['assignmentid']] = assign['submissions']
     return submissions
+
+
+def mod_assign_get_submission_status(assignment_id, user_id=None):
+    """
+    Returns the submissions for the given assignments in a dict
+    mapping assignment id to submissions
+    {id: [..]}
+    """
+    url = REQUEST_FORMAT.format('mod_assign_get_submission_status')
+    url += '&assignid={}'.format(assignment_id)
+
+    if user_id is not None:
+        url += '&userid={}'.format(user_id)
+
+    response = requests.get(url)
+    return response.json()
