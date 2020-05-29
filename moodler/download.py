@@ -1,7 +1,6 @@
 from pathlib import Path
 import urllib.request
 
-from moodler.moodler import SESSION
 from moodler.moodler.config import TOKEN, USER_MAP, URL
 
 
@@ -47,7 +46,7 @@ def download_submission(assignment_name, username, submission, download_folder, 
 def download_all_submissions(assignment_id,
                              assignment_name,
                              output_path,
-                             session=SESSION):
+                             session):
     """
     Download all submissions ZIP from the Moodle using the session created.
     :param assignment_id: The ID of the submission to download.
@@ -80,7 +79,7 @@ def download_all_submissions(assignment_id,
 def download_grading_worksheet(assignment_id,
                                assignment_name,
                                output_path,
-                               session=SESSION):
+                               session):
     """
     Download the grading sheet from the Moodle using the session created.
 

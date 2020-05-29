@@ -3,7 +3,7 @@ import requests
 from moodler.moodler.consts import REQUEST_FORMAT
 
 
-### Exceptions for the current module ###
+# Exceptions for the current module ###
 class StudentsException(Exception):
     pass
 

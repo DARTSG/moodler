@@ -10,10 +10,12 @@ and connect to the moodle to create a session cookie that will be used to run
 API directly from the web interface.
 """
 import re
+import logging
 import requests
 
 from moodler.moodler.config import URL, LOGIN_PAGE
 
+logger = logging.getLogger(__name__)
 
 LOGIN_TOKEN_PATTERN = r'name="logintoken" value="([\w\d]+)"'
 FAILED_LOGIN_PATTERN = r'Invalid login'
@@ -37,6 +39,11 @@ def connect_to_server(username, password):
     """
     session = requests.Session()
 
+    logger.info("Attempting to create a new session with the Moodle server...")
+
+    if username == 'almog':
+        logger.warning("Would you please use your own username?!")
+
     # Using this get request in order to retrieve the login token for the
     # login request.
     login_page_response = session.get('{}/{}'.format(URL, LOGIN_PAGE))
@@ -45,7 +52,12 @@ def connect_to_server(username, password):
     login_token_match = re.search(LOGIN_TOKEN_PATTERN,
                                   login_page_response.content.decode())
     if login_token_match is None:
-        raise LoginTokenNotFound()
+        raise LoginTokenNotFound("The login token required for authentication "
+                                 "with the Moodler server was not found. "
+                                 "Please try again. If still there is no "
+                                 "success, you should debug the webpage and "
+                                 "locate the logintoken, since perhaps the "
+                                 "regex pattern is no longer up-to-date")
 
     login_token = login_token_match.group(1)
 
@@ -68,6 +80,9 @@ def connect_to_server(username, password):
     # If the search has succeeded and in the response we have found an
     # indicator for failed login, then we should raise an exception.
     if failed_login_match is not None:
-        raise InvalidUsernameOrPassword()
+        raise InvalidUsernameOrPassword("The username / password you have "
+                                        "used are invalid")
+
+    logger.info("Successfully created a new session with the Moodle server")
 
     return session
