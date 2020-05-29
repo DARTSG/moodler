@@ -1,8 +1,11 @@
+import logging
 import requests
 
 from moodler.moodler.consts import REQUEST_FORMAT
 from moodler.moodler.students import core_course_get_contents
 from moodler.moodler.submission import Submission, mod_assign_get_submissions
+
+logger = logging.getLogger(__name__)
 
 
 class InvalidAssignmentID(Exception):
@@ -120,11 +123,13 @@ def get_assignments_details(course_id, assignments_list):
     :return: Dictionary of (assignment_id, assignment_section) for every
     assignment.
     """
-    # TODO: What's this function needed for? Not sure, it's unused.
     assignments_dict = {}
+    assignments_set = set(assignments_list)
 
     # Retrieve the contents of the course
     sections = core_course_get_contents(course_id)
+
+    logger.info("Locating the exercises for trainer in the Moodle")
 
     # Looking through the course contents trying to locate the assignment
     for section in sections:
@@ -135,7 +140,7 @@ def get_assignments_details(course_id, assignments_list):
                 continue
 
             # Looking only for an exercise in the received list
-            if module['name'] not in assignments_list:
+            if module['name'] not in assignments_set:
                 continue
 
             # Retrieve all the assignment files
@@ -146,5 +151,10 @@ def get_assignments_details(course_id, assignments_list):
             assignments_dict[module['name']] = (module['id'],
                                                 section['name'],
                                                 assignment_files)
+
+    assignments_not_found = assignments_set - set(assignments_dict.keys())
+    if assignments_not_found:
+        logger.error("Could not find the following exercises for the trainer: "
+                     "%s", assignments_not_found)
 
     return assignments_dict

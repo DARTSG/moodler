@@ -3,6 +3,15 @@ import requests
 from moodler.moodler.consts import REQUEST_FORMAT
 
 
+### Exceptions for the current module ###
+class StudentsException(Exception):
+    pass
+
+
+class EmptyCoursesList(StudentsException):
+    pass
+
+
 class Course(object):
     def __init__(self, course_id, full_name, short_name):
         self.id = course_id
@@ -81,6 +90,9 @@ def list_courses(course_prefix):
     """
     courses_list = []
     courses_from_moodle = core_course_get_courses()
+
+    if not courses_from_moodle:
+        raise EmptyCoursesList("The Moodle has returned an empty courses list")
 
     for course in courses_from_moodle:
         if ((course_prefix not in course['shortname']) and
