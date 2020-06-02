@@ -21,11 +21,15 @@ LOGIN_TOKEN_PATTERN = r'name="logintoken" value="([\w\d]+)"'
 FAILED_LOGIN_PATTERN = r'Invalid login'
 
 
-class LoginTokenNotFound(Exception):
+class MoodleLoginException(Exception):
     pass
 
 
-class InvalidUsernameOrPassword(Exception):
+class LoginTokenNotFound(MoodleLoginException):
+    pass
+
+
+class InvalidUsernameOrPassword(MoodleLoginException):
     pass
 
 
