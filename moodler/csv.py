@@ -1,4 +1,5 @@
 import logging
+import sys
 import os
 import csv
 
@@ -8,6 +9,8 @@ logger = logging.getLogger(__name__)
 
 ALL = 'all'
 UNGRADED = 'ungraded'
+
+BIG_NUMBER_FOR_FIELD_MAX = 0x1000000
 
 # Indexes are by order for 'Maximum Grade', 'Grade can be changed', 'Last modified (submission)', 'Online text'
 COLUMNS_TO_REMOVE = [5, 6, 7, 8]
@@ -132,6 +135,10 @@ def write_output_csv(output_csv_path, submission_type, reader, first_row):
 
         # Write first line from source CSV
         writer.writerow((row[0], row[1], row[2], row[3], row[4], row[9], row[10]))
+
+        # To prevent the following exception:
+        # _csv.Error: field larger than field limit (131072)
+        csv.field_size_limit(BIG_NUMBER_FOR_FIELD_MAX)
 
         for row in reader:
             # Verify that the submission is of the status we're looking for
