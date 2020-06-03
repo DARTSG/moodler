@@ -14,7 +14,9 @@ class InvalidAssignmentID(Exception):
 
 class Assignment(object):
     def __init__(self, assignment_json, submissions_json, grades_json):
+        # a random number Moodle generates in API (not seen when you use Moodle visually)
         self.uid = assignment_json['id']
+        # the actual ID that you see in the Moodle interface
         self.cmid = assignment_json['cmid']
         self.name = assignment_json['name']
         self.description = assignment_json['intro']
