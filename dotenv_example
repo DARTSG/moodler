@@ -1,0 +1,5 @@
+# Update the following variables and save the file as .env
+
+TOKEN=123abcdefg
+URL=http://192.168.1.1
+
