@@ -3,10 +3,17 @@ import requests
 from moodler.consts import REQUEST_FORMAT
 
 
+class MissingGrade(Exception):
+    pass
+
+
 class Grade(object):
     def __init__(self, grade_json):
         self.timestamp = grade_json['timemodified']
-        self.grade = float(grade_json['grade'])
+        try:
+            self.grade = float(grade_json['grade'])
+        except ValueError:
+            raise MissingGrade()
         self._json_data = grade_json
 
     def __repr__(self):

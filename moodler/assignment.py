@@ -1,9 +1,10 @@
 import logging
 import requests
 
+from moodler.config import URL
 from moodler.consts import REQUEST_FORMAT
-from moodler.students import core_course_get_contents
-from moodler.submission import Submission, mod_assign_get_submissions
+from moodler.students import core_course_get_contents, get_user_name
+from moodler.submission import Submission, mod_assign_get_submissions, MissingGrade
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,14 @@ class Assignment(object):
                     grade_json = grade
                     break
             if 'new' != submission['status']:
-                self.submissions.append(Submission(user_id, grade_json, submission))
+                try:
+                    self.submissions.append(Submission(user_id, grade_json, submission))
+                except MissingGrade:
+                    logger.warning("Missing grade for student \"{}\" in assignment \"{}\". Fix ASAP at {}".format(
+                        get_user_name(user_id),
+                        self.name,
+                        "{}//mod/assign/view.php?id={}&action=grader&userid={}".format(URL, self.cmid, user_id)))
+                    self.submissions.append(Submission(user_id, None, submission))
 
         self._assignment_json = assignment_json
         self._submissions_json = submissions_json
