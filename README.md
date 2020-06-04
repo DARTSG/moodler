@@ -41,6 +41,6 @@ List names of all students
 
 
 ## Useful Links
-[http://<moodleip>/admin/webservice/documentation.php](Documentation for all api functions)
+`http://<moodleip>/admin/webservice/documentation.php` - Documentation for all api functions
 
-[http://<moodleip>/admin/webservice/service_functions.php?id=4](Allow the use of specific functions)
+`http://<moodleip>/admin/webservice/service_functions.php?id=4` - Allow the use of specific functions
