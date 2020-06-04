@@ -27,9 +27,9 @@ import argparse
 import logging
 from pprint import pprint
 
-from moodler.moodler.moodle import ungraded_submissions, export_feedbacks, \
+from moodler.moodle import ungraded_submissions, export_feedbacks, \
     export_all
-from moodler.moodler.students import get_students
+from moodler.students import get_students
 
 logger = logging.getLogger(__name__)
 
