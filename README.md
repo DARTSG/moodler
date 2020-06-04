@@ -30,12 +30,12 @@ python moodler.py feedbacks <course_id> <download_folder>
 Downloads all the feedbacks from the given course to the specified folder
 
 ```bash
-python export <course_id> <download_folder>
+python moodler.py export <course_id> <download_folder>
 ```
 Exports submissions, materials, and grades for a course
 
 ```bash
-python list_students <course_id>
+python moodler.py list_students <course_id>
 ```
 List names of all students
 
