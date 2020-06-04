@@ -69,7 +69,6 @@ def parse_args():
                                                  help='List names of all students')
     parser_list_students.add_argument('course_id', type=int, help='The course id to query')
     parser_list_students.set_defaults(which='list_students')
-    # parser_export.set_defaults(which='export')
 
     args = parser.parse_args()
     return args, parser
