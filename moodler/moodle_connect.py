@@ -45,9 +45,6 @@ def connect_to_server(username, password):
 
     logger.info("Attempting to create a new session with the Moodle server...")
 
-    if username == 'almog':
-        logger.warning("Would you please use your own username?!")
-
     # Using this get request in order to retrieve the login token for the
     # login request.
     login_page_response = session.get('{}/{}'.format(URL, LOGIN_PAGE))
