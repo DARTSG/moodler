@@ -17,24 +17,24 @@ Works and tested with python 3.7.7
 2. Create you .env file (see example in the file `env_example`)
 
 ## Usage
-```
+```bash
 python moodler.py ungraded <course_id> [--verbose] [download_folder]
 ```
 Prints the information about ungraded exercises for a course
 course_id - The id of the course to query
 download_folder - if specified, will download the ungraded submissions to the given folder
 
-```
+```bash
 python moodler.py feedbacks <course_id> <download_folder>
 ```
 Downloads all the feedbacks from the given course to the specified folder
 
-```
+```bash
 python export <course_id> <download_folder>
 ```
 Exports submissions, materials, and grades for a course
 
-```
+```bash
 python list_students <course_id>
 ```
 List names of all students
