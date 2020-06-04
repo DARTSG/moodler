@@ -2,7 +2,7 @@ import csv
 import requests
 from pathlib import Path
 
-from moodler.moodler.consts import REQUEST_FORMAT
+from moodler.consts import REQUEST_FORMAT
 
 
 class Feedback(object):

@@ -4,7 +4,7 @@ interface in the Moodle UI.
 """
 import re
 
-from moodler.moodler.config import URL
+from moodler.config import URL
 
 
 DB_UPDATE_SQL_COMMAND = r'''

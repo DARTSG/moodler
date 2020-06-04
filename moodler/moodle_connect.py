@@ -13,7 +13,7 @@ import re
 import logging
 import requests
 
-from moodler.moodler.config import URL, LOGIN_PAGE
+from moodler.config import URL, LOGIN_PAGE
 
 logger = logging.getLogger(__name__)
 

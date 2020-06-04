@@ -1,9 +1,9 @@
 import logging
 import requests
 
-from moodler.moodler.consts import REQUEST_FORMAT
-from moodler.moodler.students import core_course_get_contents
-from moodler.moodler.submission import Submission, mod_assign_get_submissions
+from moodler.consts import REQUEST_FORMAT
+from moodler.students import core_course_get_contents
+from moodler.submission import Submission, mod_assign_get_submissions
 
 logger = logging.getLogger(__name__)
 
