@@ -13,7 +13,16 @@ logger = logging.getLogger(__name__)
 
 def ungraded_submissions(course_id, is_verbose=False, download_folder=None):
     """
-    Returns the amount exercises that need grading for a course.
+    Returns a dictionary describing the status of ungraded exercises in the course.
+    The dictionary looks like this:
+        ```
+        {
+            'total_submissions': 10,
+            'total_ungraded': 5,
+            'total_resubmissions': 2,
+            'ungraded': [{ 'name': 'assign1', 'ungraded': 2, 'resubmissions': 0}]
+        }
+        ```
 
     If download_folder is set, downloads the ungraded exercises
     """
