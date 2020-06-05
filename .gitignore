@@ -4,6 +4,7 @@
 
 # Environment configuration
 .env
+*.bak
 
 # Python cache files
 __pycache__/*
