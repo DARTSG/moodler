@@ -47,21 +47,27 @@ class Submission(object):
                 for f in filearea['files']:
                     self.submission_files.append(SubmissionFile(f))
 
+        # Useful for debugging
+        self._submission_json = submission_json
+
     @property
     def submitted(self):
         return 'submitted' == self.status
 
     def needs_grading(self):
-        if not self.submitted:
-            return False
+        """
+        Returns True if the submission needs grading.
+        Does this by checking the grading status and also checks for resubmissions by comparing the timestamps of the grade to the submission files
+        """
+        if self.submitted:
+            if 'notgraded' == self.gradingstatus:
+                return True
+            if self.grade is not None \
+               and 0 < len(self.submission_files) \
+               and self.grade.timestamp - max([sf.timestamp for sf in self.submission_files]) < 0:
+                return True
 
-        if 'graded' == self.gradingstatus:
-            return False
-        elif 'notgraded' == self.gradingstatus:
-            return True
-
-        if self.grade is not None and self.grade.timestamp - max([sf.timestamp for sf in self.submission_files]) < 0:
-            return True
+        return False
 
     def __repr__(self):
         return 'Submission(user_id={}, status={}, gradingstatus={}, grade={}, submitted={})'.format(self.user_id,
