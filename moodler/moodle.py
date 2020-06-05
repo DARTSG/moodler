@@ -18,44 +18,58 @@ def ungraded_submissions(course_id, is_verbose=False, download_folder=None):
     If download_folder is set, downloads the ungraded exercises
     """
     logger.info("Showing ungraded submissions for course %s", course_id)
+    total_submissions = 0
     total_ungraded = 0
+    total_resubmissions = 0
+    ungraded_assignments = []
 
     assignments = get_assignments(course_id)
     users_map = get_students(course_id)
+
     for assignment in assignments:
-        assignment.num_of_ungraded = 0
-        # List of student names whose submissions were ignored
+        ungraded = assignment.ungraded()
+        total_submissions += len(assignment.submissions)
+        total_ungraded += len(ungraded)
+        resubmissions = 0
         ungraded_ignored = []
-        # Count total number of submissions to this exercise
-        total_submissions = 0
-        for submission in assignment.submissions:
-            # Track number of submissions made
-            if submission.submitted:
-                total_submissions += 1
 
-            # Process ungraded submission
-            if submission.needs_grading():
-                # Check if it's a student to ignore
-                student_id = submission.user_id
-                if student_id in STUDENTS_TO_IGNORE.keys():
-                    ungraded_ignored.append(STUDENTS_TO_IGNORE[student_id])
-                else:
-                    assignment.num_of_ungraded += 1
-                # TODO: Improve with 'attemptnumber' field, to check "== 0" for new submissions only, or resubmissions
+        for submission in ungraded:
+            if submission.resubmitted:
+                resubmissions += 1
 
-                if download_folder is not None:
-                    download_submission(assignment.name, users_map[submission.user_id], submission, download_folder)
+            if submission.user_id in STUDENTS_TO_IGNORE.keys():
+                ungraded_ignored.append(STUDENTS_TO_IGNORE[submission.user_id])
+
+            if download_folder is not None:
+                download_submission(assignment.name, users_map[submission.user_id],
+                                    submission, download_folder)
+
+        total_resubmissions += resubmissions
 
         # Print total stats about this assignment
         if is_verbose and len(ungraded_ignored) != 0:
-            logger.info("Ignored %s submissions for assignment '%s' (CMID %s, ID %s): %s", len(ungraded_ignored),
-                        assignment.name, assignment.cmid, assignment.uid, ungraded_ignored)
-        if assignment.num_of_ungraded != 0:
-            logger.info("Total ungraded for assignment '%s' (CMID %s, ID %s): %s/%s", assignment.name,
-                        assignment.cmid, assignment.uid, assignment.num_of_ungraded, total_submissions)
-        total_ungraded += assignment.num_of_ungraded
+            logger.info("Ignored %s submissions for assignment '%s' (CMID %s, ID %s): %s",
+                        len(ungraded_ignored), assignment.name, assignment.cmid,
+                        assignment.uid, ungraded_ignored)
 
-    return total_ungraded
+        amount_ungraded_not_ignored = len(ungraded) - len(ungraded_ignored)
+        if amount_ungraded_not_ignored != 0:
+            logger.info("Total ungraded for assignment '%s' (CMID %s, ID %s): %s/%s",
+                        assignment.name, assignment.cmid, assignment.uid,
+                        amount_ungraded_not_ignored, len(assignment.submissions))
+
+            ungraded_assignments.append({
+                'name': assignment.name,
+                'ungraded': amount_ungraded_not_ignored,
+                'resubmissions': resubmissions
+            })
+
+    return {
+        'total_submissions': total_submissions,
+        'total_ungraded': total_ungraded,
+        'total_resubmissions': total_resubmissions,
+        'ungraded': ungraded_assignments
+    }
 
 
 def export_feedbacks(course_id, folder):

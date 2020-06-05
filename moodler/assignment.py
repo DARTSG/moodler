@@ -49,6 +49,14 @@ class Assignment(object):
         # change every execution.
         self.num_of_ungraded = 0
 
+    def ungraded(self):
+        submissions = []
+        for submission in self.submissions:
+            # Process ungraded submission
+            if submission.needs_grading():
+                submissions.append(submission)
+        return submissions
+
     def __repr__(self):
         return 'Assignment(id={}, name={}, submissions={})'.format(self.uid, self.name, len(self.submissions))
 
