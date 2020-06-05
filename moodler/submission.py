@@ -40,6 +40,7 @@ class Submission(object):
         self.status = submission_json['status']
         self.gradingstatus = submission_json['gradingstatus']
         self.submission_files = []
+        self.timestamp = submission_json['timemodified']
         for plugin in submission_json['plugins']:
             if 'file' != plugin['type']:
                 continue
@@ -54,20 +55,18 @@ class Submission(object):
     def submitted(self):
         return 'submitted' == self.status
 
+    @property
+    def resubmitted(self):
+        # Returns true if the submission was edited after the last grading
+        return self.grade is not None and self.grade.timestamp < self.timestamp
+
     def needs_grading(self):
         """
         Returns True if the submission needs grading.
         Does this by checking the grading status and also checks for resubmissions by comparing the timestamps of the grade to the submission files
         """
-        if self.submitted:
-            if 'notgraded' == self.gradingstatus:
-                return True
-            if self.grade is not None \
-               and 0 < len(self.submission_files) \
-               and self.grade.timestamp - max([sf.timestamp for sf in self.submission_files]) < 0:
-                return True
-
-        return False
+        return self.submitted and \
+                ('notgraded' == self.gradingstatus or self.resubmitted)
 
     def __repr__(self):
         return 'Submission(user_id={}, status={}, gradingstatus={}, grade={}, submitted={})'.format(self.user_id,
