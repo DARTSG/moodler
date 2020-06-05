@@ -63,7 +63,7 @@ class Submission(object):
     def needs_grading(self):
         """
         Returns True if the submission needs grading.
-        Does this by checking the grading status and also checks for resubmissions by comparing the timestamps of the grade to the submission files
+        Does this by checking the grading status and the grading timestamp vs the last modification timestamp
         """
         return self.submitted and \
                 ('notgraded' == self.gradingstatus or self.resubmitted)
