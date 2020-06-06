@@ -147,10 +147,16 @@ def locate_course_name(course_id, course_prefix=None):
 def get_assignments_by_section(course_id,
                                sections_names=None,
                                assignments_names=None):
+    """
+    Retrieving assignments by sections.
+    """
     exercises_by_sections = {}
 
     # Retrieve the contents of the course
     sections = core_course_get_contents(course_id)
+
+    if sections_names is not None:
+        sections_not_found = sections_names[:]
 
     # Looking through the course contents trying to locate the assignment
     for section in sections:
@@ -159,6 +165,8 @@ def get_assignments_by_section(course_id,
         if sections_names is not None:
             if section['name'] not in sections_names:
                 continue
+
+        sections_not_found.remove(section['name'])
 
         current_section_assignments = []
         for module in section['modules']:
@@ -178,3 +186,9 @@ def get_assignments_by_section(course_id,
         if current_section_assignments:
             exercises_by_sections[section['name']] = get_assignments(
                 current_section_assignments)
+
+    if sections_not_found:
+        logger.error("Could not find the following sections: %s",
+                     sections_not_found)
+
+    return exercises_by_sections
