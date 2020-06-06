@@ -1,6 +1,13 @@
+import logging
 import requests
 
 from moodler.consts import REQUEST_FORMAT
+
+logger = logging.getLogger(__name__)
+
+
+class TwoStudentsFoundConflict(Exception):
+    pass
 
 
 def core_enrol_get_enrolled_users(course_id):
@@ -21,6 +28,39 @@ def get_students(course_id):
         if enrolled['roles'][0]['shortname'] == 'student':
             enrolled_students[enrolled['id']] = enrolled['fullname']
     return enrolled_students
+
+
+def is_student_in_names(students_names, enrolled):
+    """
+    Check whether the student enrolled is in the list of names received.
+    """
+    for student_name in students_names:
+        if student_name in enrolled['fullname']:
+            logger.info("Found student '%s' for the received name '%s'",
+                        enrolled['fullname'],
+                        student_name)
+            return True
+
+    return False
+
+
+def get_students_ids_by_names(course_id, students_names=None):
+    """
+    Get only the students enrolled in a course
+    """
+    students_ids = []
+
+    for enrolled in core_enrol_get_enrolled_users(course_id):
+        if enrolled['roles'][0]['shortname'] != 'student':
+            continue
+
+        if students_names is not None:
+            if not is_student_in_names(students_names, enrolled):
+                continue
+
+        students_ids.append(enrolled['id'])
+
+    return students_ids
 
 
 def list_students():

@@ -3,7 +3,7 @@ import requests
 
 from moodler.config import URL
 from moodler.consts import REQUEST_FORMAT
-from moodler.students import core_course_get_contents, get_user_name
+from moodler.students import get_user_name, get_students_ids_by_names
 from moodler.submission import Submission, mod_assign_get_submissions, MissingGrade
 
 logger = logging.getLogger(__name__)
@@ -51,6 +51,32 @@ class Assignment(object):
 
     def __repr__(self):
         return 'Assignment(id={}, name={}, submissions={})'.format(self.uid, self.name, len(self.submissions))
+
+    def lock_submissions(self, course_id, students=None):
+        """
+        Locking submissions for this specific assignment.
+        """
+        students_ids = get_students_ids_by_names(course_id, students)
+        mod_assign_lock_submissions(self.cmid, students_ids)
+
+        logger.info("Locked submissions for assignment '%s' for %s",
+                    self.name,
+                    students if students is not None else "all students.")
+
+
+def mod_assign_lock_submissions(assignment_id, user_ids):
+    """
+    Returns a dictionary mapping assignment id to its name from a specified course
+    """
+    params = {
+        'assignid': assignment_id,
+        'userids': user_ids
+    }
+    response = requests.get(
+        REQUEST_FORMAT.format('mod_assign_lock_submissions'),
+        params=params)
+
+    return response.json()
 
 
 def mod_assign_get_grades(assignment_ids):
