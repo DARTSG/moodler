@@ -2,6 +2,7 @@ import logging
 import requests
 
 from moodler.consts import REQUEST_FORMAT
+from moodler.assignment import get_assignments
 
 logger = logging.getLogger(__name__)
 
@@ -142,3 +143,38 @@ def locate_course_name(course_id, course_prefix=None):
     raise CourseNotFoundInMoodle("No course with the ID received has been "
                                  "found in the Moodle.")
 
+
+def get_assignments_by_section(course_id,
+                               sections_names=None,
+                               assignments_names=None):
+    exercises_by_sections = {}
+
+    # Retrieve the contents of the course
+    sections = core_course_get_contents(course_id)
+
+    # Looking through the course contents trying to locate the assignment
+    for section in sections:
+        # Making sure this section is one of the sections we are supposed to
+        # be looking at, unless the list is None
+        if sections_names is not None:
+            if section['name'] not in sections_names:
+                continue
+
+        current_section_assignments = []
+        for module in section['modules']:
+            # We are only looking for assignments and no other resource in
+            # the moodle
+            if module['modname'] != 'assign':
+                continue
+
+            # Looking only for an exercise in the received list, unless it is
+            # None
+            if assignments_names is not None:
+                if module['name'] not in assignments_names:
+                    continue
+
+            current_section_assignments.append(module['id'])
+
+        if current_section_assignments:
+            exercises_by_sections[section['name']] = get_assignments(
+                current_section_assignments)
