@@ -82,7 +82,8 @@ def main():
     if 'none' == args.which:
         parser.print_help()
     elif 'ungraded' == args.which:
-        print("Ungraded: {}".format(ungraded_submissions(args.course_id, is_verbose=args.verbose, download_folder=args.download_folder)))
+        ungraded = ungraded_submissions(args.course_id, is_verbose=args.verbose, download_folder=args.download_folder)
+        print("Total ungraded: {}".format(ungraded['total_ungraded']))
     elif args.which == 'list_students':
         pprint(get_students(args.course_id))
     elif 'feedbacks' == args.which:
