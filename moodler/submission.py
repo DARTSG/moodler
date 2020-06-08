@@ -37,7 +37,6 @@ class Submission(object):
             self.grade = Grade(grade_json)
         else:
             self.grade = None
-        self.status = submission_json['status']
         self.gradingstatus = submission_json['gradingstatus']
         self.submission_files = []
         self.timestamp = submission_json['timemodified']
@@ -50,10 +49,6 @@ class Submission(object):
 
         # Useful for debugging
         self._submission_json = submission_json
-
-    @property
-    def submitted(self):
-        return 'submitted' == self.status
 
     @property
     def resubmitted(self):
