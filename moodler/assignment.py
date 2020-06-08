@@ -71,10 +71,21 @@ class Assignment(object):
                     self.name,
                     students if students is not None else "all students.")
 
+    def unlock_submissions(self, course_id, students=None):
+        """
+        Locking submissions for this specific assignment.
+        """
+        students_ids = get_students_ids_by_names(course_id, students)
+        mod_assign_unlock_submissions(self.cmid, students_ids)
+
+        logger.info("Locked submissions for assignment '%s' for %s",
+                    self.name,
+                    students if students is not None else "all students.")
+
 
 def mod_assign_lock_submissions(assignment_id, user_ids):
     """
-    Returns a dictionary mapping assignment id to its name from a specified course
+    Locks submissions for a specific assignments for a specific user(s).
     """
     params = {
         'assignid': assignment_id,
@@ -82,6 +93,21 @@ def mod_assign_lock_submissions(assignment_id, user_ids):
     }
     response = requests.get(
         REQUEST_FORMAT.format('mod_assign_lock_submissions'),
+        params=params)
+
+    return response.json()
+
+
+def mod_assign_unlock_submissions(assignment_id, user_ids):
+    """
+    Unlocks submissions for a specific assignments for a specific user(s).
+    """
+    params = {
+        'assignid': assignment_id,
+        'userids': user_ids
+    }
+    response = requests.get(
+        REQUEST_FORMAT.format('mod_assign_unlock_submissions'),
         params=params)
 
     return response.json()
@@ -141,8 +167,8 @@ def get_assignments(course_id, assignment_ids_to_get=None):
                                       submissions.get(assignment['id'], []),
                                       grades.get(assignment['id'], [])))
 
-        # TODO: Make sure this works - ID or CMID?
-        assignments_not_found.remove(assignment['cmid'])
+        if assignments_not_found is not None:
+            assignments_not_found.remove(assignment['cmid'])
 
     if assignments_not_found:
         logger.error("Could not find the following exercises for the trainer: "
@@ -180,7 +206,8 @@ def get_assignments_by_names(course_id, assignment_names_to_get=None):
                                       submissions.get(assignment['id'], []),
                                       grades.get(assignment['id'], [])))
 
-        assignments_not_found.remove(assignment['name'])
+        if assignments_not_found is not None:
+            assignments_not_found.remove(assignment['name'])
 
     if assignments_not_found:
         logger.error("Could not find the following exercises for the trainer: "

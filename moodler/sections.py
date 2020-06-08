@@ -166,7 +166,7 @@ def get_assignments_by_section(course_id,
             if section['name'] not in sections_names:
                 continue
 
-        sections_not_found.remove(section['name'])
+            sections_not_found.remove(section['name'])
 
         current_section_assignments = []
         for module in section['modules']:
@@ -185,6 +185,7 @@ def get_assignments_by_section(course_id,
 
         if current_section_assignments:
             exercises_by_sections[section['name']] = get_assignments(
+                course_id,
                 current_section_assignments)
 
     if sections_not_found:
