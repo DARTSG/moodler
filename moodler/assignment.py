@@ -65,7 +65,7 @@ class Assignment(object):
         Locking submissions for this specific assignment.
         """
         students_ids = get_students_ids_by_names(course_id, students)
-        mod_assign_lock_submissions(self.cmid, students_ids)
+        mod_assign_lock_submissions(self.uid, students_ids)
 
         logger.info("Locked submissions for assignment '%s' for %s",
                     self.name,
@@ -76,7 +76,7 @@ class Assignment(object):
         Locking submissions for this specific assignment.
         """
         students_ids = get_students_ids_by_names(course_id, students)
-        mod_assign_unlock_submissions(self.cmid, students_ids)
+        mod_assign_unlock_submissions(self.uid, students_ids)
 
         logger.info("Locked submissions for assignment '%s' for %s",
                     self.name,
