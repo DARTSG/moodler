@@ -87,13 +87,14 @@ def mod_assign_lock_submissions(assignment_id, user_ids):
     """
     Locks submissions for a specific assignments for a specific user(s).
     """
-    params = {
-        'assignmentid': assignment_id,
-        'userids': user_ids
-    }
-    response = requests.get(
-        REQUEST_FORMAT.format('mod_assign_lock_submissions'),
-        params=params)
+    url = REQUEST_FORMAT.format('mod_assign_lock_submissions')
+
+    url += '&assignmentid={}'.format(assignment_id)
+
+    for i, user_id in enumerate(user_ids):
+        url += '&userids[{}]={}'.format(i, user_id)
+
+    response = requests.get(url)
 
     validate_response('mod_assign_lock_submissions', response.json())
 
@@ -102,13 +103,14 @@ def mod_assign_unlock_submissions(assignment_id, user_ids):
     """
     Unlocks submissions for a specific assignments for a specific user(s).
     """
-    params = {
-        'assignmentid': assignment_id,
-        'userids': user_ids
-    }
-    response = requests.get(
-        REQUEST_FORMAT.format('mod_assign_unlock_submissions'),
-        params=params)
+    url = REQUEST_FORMAT.format('mod_assign_unlock_submissions')
+
+    url += '&assignmentid={}'.format(assignment_id)
+
+    for i, user_id in enumerate(user_ids):
+        url += '&userids[{}]={}'.format(i, user_id)
+
+    response = requests.get(url)
 
     validate_response('mod_assign_unlock_submissions', response.json())
 
@@ -123,7 +125,7 @@ def mod_assign_get_grades(assignment_ids):
     grades = {}
     response = requests.get(url).json()
 
-    validate_response('mod_assign_get_grades', response.json())
+    validate_response('mod_assign_get_grades', response)
 
     for grds in response['assignments']:
         grades[grds['assignmentid']] = grds['grades']
