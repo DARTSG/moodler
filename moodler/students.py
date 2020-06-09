@@ -1,7 +1,7 @@
 import logging
 import requests
 
-from moodler.consts import REQUEST_FORMAT
+from moodler.consts import REQUEST_FORMAT, validate_response
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +16,9 @@ def core_enrol_get_enrolled_users(course_id):
     """
     response = requests.get(REQUEST_FORMAT.format('core_enrol_get_enrolled_users')
                             + '&courseid={}'.format(course_id))
+
+    validate_response('core_enrol_get_enrolled_users', response.json())
+
     return response.json()
 
 
@@ -71,6 +74,8 @@ def list_students():
     response = requests.get(
         REQUEST_FORMAT.format('core_user_get_users') + '&criteria[0][key]=email&criteria[0][value]=%%')
 
+    validate_response('core_user_get_users', response.json())
+
     # Create users map
     users_map = {}
     for user in response.json()['users']:
@@ -81,5 +86,8 @@ def list_students():
 def get_user_name(user_id):
     response = requests.get(
         REQUEST_FORMAT.format('core_user_get_users_by_field') + '&field=id&values[0]={}'.format(user_id))
+
+    validate_response('core_user_get_users_by_field', response.json())
+
     response_json = response.json()[0]
     return response_json['firstname'] + ' ' + response_json['lastname']

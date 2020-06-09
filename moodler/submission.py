@@ -1,6 +1,6 @@
 import requests
 
-from moodler.consts import REQUEST_FORMAT
+from moodler.consts import REQUEST_FORMAT, validate_response
 
 
 class MissingGrade(Exception):
@@ -66,11 +66,11 @@ class Submission(object):
         return ('notgraded' == self.gradingstatus) or self.resubmitted
 
     def __repr__(self):
-        return 'Submission(user_id={}, status={}, gradingstatus={}, grade={}, submitted={})'.format(self.user_id,
-                                                                                                    self.status,
-                                                                                                    self.gradingstatus,
-                                                                                                    self.grade,
-                                                                                                    len(self.submission_files))
+        return 'Submission(user_id={}, gradingstatus={}, grade={}, ' \
+               'submitted={})'.format(self.user_id,
+                                      self.gradingstatus,
+                                      self.grade,
+                                      len(self.submission_files))
 
 
 def mod_assign_get_submissions(assignment_ids):
@@ -84,6 +84,8 @@ def mod_assign_get_submissions(assignment_ids):
     for i, assignment_id in enumerate(assignment_ids):
         url += '&assignmentids[{}]={}'.format(i, assignment_id)
     response = requests.get(url)
+
+    validate_response('mod_assign_get_submissions', response.json())
 
     submissions = {}
     for assign in response.json()['assignments']:
@@ -104,4 +106,7 @@ def mod_assign_get_submission_status(assignment_id, user_id=None):
         url += '&userid={}'.format(user_id)
 
     response = requests.get(url)
+
+    validate_response('mod_assign_get_submission_status', response.json())
+
     return response.json()

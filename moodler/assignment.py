@@ -2,7 +2,7 @@ import logging
 import requests
 
 from moodler.config import URL
-from moodler.consts import REQUEST_FORMAT
+from moodler.consts import REQUEST_FORMAT, validate_response
 from moodler.students import get_user_name, get_students_ids_by_names
 from moodler.submission import Submission, mod_assign_get_submissions, MissingGrade
 
@@ -88,14 +88,14 @@ def mod_assign_lock_submissions(assignment_id, user_ids):
     Locks submissions for a specific assignments for a specific user(s).
     """
     params = {
-        'assignid': assignment_id,
+        'assignmentid': assignment_id,
         'userids': user_ids
     }
     response = requests.get(
         REQUEST_FORMAT.format('mod_assign_lock_submissions'),
         params=params)
 
-    return response.json()
+    validate_response('mod_assign_lock_submissions', response.json())
 
 
 def mod_assign_unlock_submissions(assignment_id, user_ids):
@@ -103,14 +103,14 @@ def mod_assign_unlock_submissions(assignment_id, user_ids):
     Unlocks submissions for a specific assignments for a specific user(s).
     """
     params = {
-        'assignid': assignment_id,
+        'assignmentid': assignment_id,
         'userids': user_ids
     }
     response = requests.get(
         REQUEST_FORMAT.format('mod_assign_unlock_submissions'),
         params=params)
 
-    return response.json()
+    validate_response('mod_assign_unlock_submissions', response.json())
 
 
 def mod_assign_get_grades(assignment_ids):
@@ -122,6 +122,8 @@ def mod_assign_get_grades(assignment_ids):
         url += '&assignmentids[{}]={}'.format(i, assignment_id)
     grades = {}
     response = requests.get(url).json()
+
+    validate_response('mod_assign_get_grades', response.json())
 
     for grds in response['assignments']:
         grades[grds['assignmentid']] = grds['grades']
@@ -135,6 +137,8 @@ def mod_assign_get_assignments(course_id):
     """
     response = requests.get(
         REQUEST_FORMAT.format('mod_assign_get_assignments') + '&courseids[0]={}'.format(course_id))
+
+    validate_response('mod_assign_get_assignments', response.json())
 
     return response.json()["courses"][0]["assignments"]
 

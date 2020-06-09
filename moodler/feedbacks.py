@@ -2,7 +2,7 @@ import csv
 import requests
 from pathlib import Path
 
-from moodler.consts import REQUEST_FORMAT
+from moodler.consts import REQUEST_FORMAT, validate_response
 
 
 class Feedback(object):
@@ -27,18 +27,24 @@ def mod_feedback_get_feedbacks_by_courses(course_id):
     """
     Retrieves all feedbacks for a given course
     """
-    return requests.get(REQUEST_FORMAT.format(
-        'mod_feedback_get_feedbacks_by_courses') + '&courseids[0]={}'.format(course_id)
-    ).json()['feedbacks']
+    response = requests.get(REQUEST_FORMAT.format(
+        'mod_feedback_get_feedbacks_by_courses') + '&courseids[0]={}'.format(course_id))
+
+    validate_response('mod_feedback_get_feedbacks_by_courses', response.json())
+
+    return response.json()['feedbacks']
 
 
 def mod_feedback_get_analysis(feedback_id):
     """
     Retrieves the responses for the given feedback id
     """
-    return requests.get(REQUEST_FORMAT.format(
-        'mod_feedback_get_analysis') + '&feedbackid={}'.format(feedback_id)
-    ).json()
+    response = requests.get(REQUEST_FORMAT.format(
+        'mod_feedback_get_analysis') + '&feedbackid={}'.format(feedback_id))
+
+    validate_response('mod_feedback_get_analysis', response.json())
+
+    return response.json()
 
 
 def feedbacks(course_id):
