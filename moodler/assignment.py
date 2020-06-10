@@ -64,7 +64,12 @@ class Assignment(object):
         Locking submissions for this specific assignment.
         """
         students_ids = get_students(course_id, students)
-        mod_assign_lock_submissions(self.uid, students_ids.keys())
+        # We are using the list(.keys()) since the function expects to
+        # receive a list of IDs while get_students returns a dictionary of
+        # IDs as keys and names as values. So, to avoid this we use the keys.
+        # Now, the type of dictionary keys is dict_keys, so we have to case
+        # it to list.
+        mod_assign_lock_submissions(self.uid, list(students_ids.keys()))
 
         logger.info("Locked submissions for assignment '%s' for %s",
                     self.name,
@@ -75,7 +80,12 @@ class Assignment(object):
         Locking submissions for this specific assignment.
         """
         students_ids = get_students(course_id, students)
-        mod_assign_unlock_submissions(self.uid, students_ids.keys())
+        # We are using the list(.keys()) since the function expects to
+        # receive a list of IDs while get_students returns a dictionary of
+        # IDs as keys and names as values. So, to avoid this we use the keys.
+        # Now, the type of dictionary keys is dict_keys, so we have to case
+        # it to list.
+        mod_assign_unlock_submissions(self.uid, list(students_ids.keys()))
 
         logger.info("Locked submissions for assignment '%s' for %s",
                     self.name,
@@ -156,12 +166,11 @@ def get_assignments_by_field(course_id, field=None, assignments_fields=None):
             if assignment[field] not in assignments_fields:
                 continue
 
+            assignments_not_found.remove(assignment[field])
+
         assignments.append(Assignment(assignment,
                                       submissions.get(assignment['id'], []),
                                       grades.get(assignment['id'], [])))
-
-        if assignments_not_found is not None:
-            assignments_not_found.remove(assignment[field])
 
     if assignments_not_found:
         logger.error("Could not find the following exercises for the trainer: "

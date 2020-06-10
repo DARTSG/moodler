@@ -30,7 +30,7 @@ def build_url(moodle_function, **kwargs):
     """
     Generic function for building a URL for Moodle API.
     """
-    url = REQUEST_FORMAT(moodle_function)
+    url = REQUEST_FORMAT.format(moodle_function)
 
     for arg_name, arg_value in kwargs.items():
         if arg_value is None:
