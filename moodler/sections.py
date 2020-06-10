@@ -158,6 +158,7 @@ def get_assignments_by_section(course_id,
     Retrieving assignments by sections.
     """
     exercises_by_sections = {}
+    sections_not_found = []
 
     # Retrieve the contents of the course
     sections = core_course_get_contents(course_id)
