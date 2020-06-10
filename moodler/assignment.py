@@ -1,4 +1,5 @@
 import logging
+import requests
 
 from moodler.config import URL
 from moodler.moodle_api import call_moodle_api

@@ -1,6 +1,3 @@
-import csv
-from pathlib import Path
-
 from moodler.moodle_api import call_moodle_api
 
 
