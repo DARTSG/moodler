@@ -1,8 +1,7 @@
 import logging
-import requests
 
-from moodler.consts import REQUEST_FORMAT, validate_response
 from moodler.assignment import get_assignments
+from moodler.moodle_api import call_moodle_api
 
 logger = logging.getLogger(__name__)
 
@@ -45,23 +44,18 @@ def core_course_get_courses():
     """
     Returns a tuple of ids and course names
     """
-    response = requests.get(REQUEST_FORMAT.format('core_course_get_courses'))
+    response = call_moodle_api('core_course_get_courses')
 
-    validate_response('core_course_get_courses', response.json())
-
-    return response.json()
+    return response
 
 
 def core_course_get_contents(course_id):
     """
     Returns the structure of the course with all resources and topics
     """
-    response = requests.get(REQUEST_FORMAT.format('core_course_get_contents') +
-                            '&courseid={}'.format(course_id))
+    response = call_moodle_api('core_course_get_contents', courseid=course_id)
 
-    validate_response('core_course_get_contents', response.json())
-
-    return response.json()
+    return response
 
 
 def list_courses(course_prefix=None):

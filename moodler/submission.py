@@ -1,6 +1,6 @@
 import requests
 
-from moodler.consts import REQUEST_FORMAT, validate_response
+from moodler.moodle_api import call_moodle_api
 
 
 class MissingGrade(Exception):
@@ -79,17 +79,13 @@ def mod_assign_get_submissions(assignment_ids):
     mapping assignment id to submissions
     {id: [..]}
     """
-
-    url = REQUEST_FORMAT.format('mod_assign_get_submissions')
-    for i, assignment_id in enumerate(assignment_ids):
-        url += '&assignmentids[{}]={}'.format(i, assignment_id)
-    response = requests.get(url)
-
-    validate_response('mod_assign_get_submissions', response.json())
+    response = call_moodle_api('mod_assign_get_submissions',
+                               assignmentids=assignment_ids)
 
     submissions = {}
-    for assign in response.json()['assignments']:
+    for assign in response['assignments']:
         submissions[assign['assignmentid']] = assign['submissions']
+
     return submissions
 
 
@@ -99,14 +95,8 @@ def mod_assign_get_submission_status(assignment_id, user_id=None):
     mapping assignment id to submissions
     {id: [..]}
     """
-    url = REQUEST_FORMAT.format('mod_assign_get_submission_status')
-    url += '&assignid={}'.format(assignment_id)
+    response = call_moodle_api('mod_assign_get_submission_status',
+                               assignid=assignment_id,
+                               userid=user_id)
 
-    if user_id is not None:
-        url += '&userid={}'.format(user_id)
-
-    response = requests.get(url)
-
-    validate_response('mod_assign_get_submission_status', response.json())
-
-    return response.json()
+    return response

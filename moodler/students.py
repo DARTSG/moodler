@@ -1,7 +1,8 @@
-import logging
 import requests
+import logging
 
-from moodler.consts import REQUEST_FORMAT, validate_response
+from moodler.consts import REQUEST_FORMAT
+from moodler.moodle_api import call_moodle_api, validate_response
 
 logger = logging.getLogger(__name__)
 
@@ -14,23 +15,10 @@ def core_enrol_get_enrolled_users(course_id):
     """
     Get enrolled users by course id
     """
-    response = requests.get(REQUEST_FORMAT.format('core_enrol_get_enrolled_users')
-                            + '&courseid={}'.format(course_id))
+    response = call_moodle_api('core_enrol_get_enrolled_users',
+                               courseid=course_id)
 
-    validate_response('core_enrol_get_enrolled_users', response.json())
-
-    return response.json()
-
-
-def get_students(course_id):
-    """
-    Get only the students enrolled in a course
-    """
-    enrolled_students = {}
-    for enrolled in core_enrol_get_enrolled_users(course_id):
-        if enrolled['roles'][0]['shortname'] == 'student':
-            enrolled_students[enrolled['id']] = enrolled['fullname']
-    return enrolled_students
+    return response
 
 
 def is_student_in_names(students_names, enrolled):
@@ -47,12 +35,11 @@ def is_student_in_names(students_names, enrolled):
     return False
 
 
-def get_students_ids_by_names(course_id, students_names=None):
+def get_students(course_id, students_names=None):
     """
     Get only the students enrolled in a course
     """
-    students_ids = []
-
+    enrolled_students = {}
     for enrolled in core_enrol_get_enrolled_users(course_id):
         if enrolled['roles'][0]['shortname'] != 'student':
             continue
@@ -61,18 +48,22 @@ def get_students_ids_by_names(course_id, students_names=None):
             if not is_student_in_names(students_names, enrolled):
                 continue
 
-        students_ids.append(enrolled['id'])
+        enrolled_students[enrolled['id']] = enrolled['fullname']
 
-    return students_ids
+    return enrolled_students
 
 
 def list_students():
     """
-    More generic than get_students, and includes all lists enrolled in the system. This is kept for debugging/backward
-    compatibility, you should work with get_students instead.
+    More generic than get_students, and includes all lists enrolled in the
+    system. This is kept for debugging/backward compatibility, you should work
+    with get_students instead.
     """
+    # TODO: This is not clear how to change this to call the call_moodle_api
+    #  utility function.
     response = requests.get(
-        REQUEST_FORMAT.format('core_user_get_users') + '&criteria[0][key]=email&criteria[0][value]=%%')
+        REQUEST_FORMAT.format('core_user_get_users') +
+        '&criteria[0][key]=email&criteria[0][value]=%%')
 
     validate_response('core_user_get_users', response.json())
 
@@ -84,10 +75,10 @@ def list_students():
 
 
 def get_user_name(user_id):
-    response = requests.get(
-        REQUEST_FORMAT.format('core_user_get_users_by_field') + '&field=id&values[0]={}'.format(user_id))
+    response = call_moodle_api('core_user_get_users_by_field',
+                               field='id',
+                               values=[user_id])
 
-    validate_response('core_user_get_users_by_field', response.json())
+    response_json = response[0]
 
-    response_json = response.json()[0]
     return response_json['firstname'] + ' ' + response_json['lastname']
