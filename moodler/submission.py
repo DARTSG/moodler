@@ -1,6 +1,6 @@
 import requests
 
-from moodler.consts import REQUEST_FORMAT
+from moodler.moodle_api import call_moodle_api
 
 
 class MissingGrade(Exception):
@@ -33,13 +33,16 @@ class SubmissionFile(object):
 class Submission(object):
     def __init__(self, user_id, grade_json, submission_json):
         self.user_id = user_id
+
         if grade_json is not None:
             self.grade = Grade(grade_json)
         else:
             self.grade = None
+
         self.gradingstatus = submission_json['gradingstatus']
         self.submission_files = []
         self.timestamp = submission_json['timemodified']
+
         for plugin in submission_json['plugins']:
             if 'file' != plugin['type']:
                 continue
@@ -60,15 +63,14 @@ class Submission(object):
         Returns True if the submission needs grading.
         Does this by checking the grading status and the grading timestamp vs the last modification timestamp
         """
-        return self.submitted and \
-                ('notgraded' == self.gradingstatus or self.resubmitted)
+        return ('notgraded' == self.gradingstatus) or self.resubmitted
 
     def __repr__(self):
-        return 'Submission(user_id={}, status={}, gradingstatus={}, grade={}, submitted={})'.format(self.user_id,
-                                                                                                    self.status,
-                                                                                                    self.gradingstatus,
-                                                                                                    self.grade,
-                                                                                                    len(self.submission_files))
+        return 'Submission(user_id={}, gradingstatus={}, grade={}, ' \
+               'submitted={})'.format(self.user_id,
+                                      self.gradingstatus,
+                                      self.grade,
+                                      len(self.submission_files))
 
 
 def mod_assign_get_submissions(assignment_ids):
@@ -77,15 +79,13 @@ def mod_assign_get_submissions(assignment_ids):
     mapping assignment id to submissions
     {id: [..]}
     """
-
-    url = REQUEST_FORMAT.format('mod_assign_get_submissions')
-    for i, assignment_id in enumerate(assignment_ids):
-        url += '&assignmentids[{}]={}'.format(i, assignment_id)
-    response = requests.get(url)
+    response = call_moodle_api('mod_assign_get_submissions',
+                               assignmentids=assignment_ids)
 
     submissions = {}
-    for assign in response.json()['assignments']:
+    for assign in response['assignments']:
         submissions[assign['assignmentid']] = assign['submissions']
+
     return submissions
 
 
@@ -95,11 +95,8 @@ def mod_assign_get_submission_status(assignment_id, user_id=None):
     mapping assignment id to submissions
     {id: [..]}
     """
-    url = REQUEST_FORMAT.format('mod_assign_get_submission_status')
-    url += '&assignid={}'.format(assignment_id)
+    response = call_moodle_api('mod_assign_get_submission_status',
+                               assignid=assignment_id,
+                               userid=user_id)
 
-    if user_id is not None:
-        url += '&userid={}'.format(user_id)
-
-    response = requests.get(url)
-    return response.json()
+    return response

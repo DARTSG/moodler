@@ -6,7 +6,8 @@ from moodler.assignment import get_assignments
 from moodler.config import STUDENTS_TO_IGNORE
 from moodler.download import download_file, download_submission
 from moodler.feedbacks import feedbacks
-from moodler.students import get_students, core_course_get_contents
+from moodler.students import get_students
+from moodler.sections import core_course_get_contents
 
 logger = logging.getLogger(__name__)
 

@@ -1,9 +1,8 @@
 import logging
-import requests
 
 from moodler.config import URL
-from moodler.consts import REQUEST_FORMAT
-from moodler.students import core_course_get_contents, get_user_name
+from moodler.moodle_api import call_moodle_api
+from moodler.students import get_user_name, get_students
 from moodler.submission import Submission, mod_assign_get_submissions, MissingGrade
 
 logger = logging.getLogger(__name__)
@@ -60,17 +59,55 @@ class Assignment(object):
     def __repr__(self):
         return 'Assignment(id={}, name={}, submissions={})'.format(self.uid, self.name, len(self.submissions))
 
+    def lock_submissions(self, course_id, students=None):
+        """
+        Locking submissions for this specific assignment.
+        """
+        students_ids = get_students(course_id, students)
+        mod_assign_lock_submissions(self.uid, students_ids.keys())
+
+        logger.info("Locked submissions for assignment '%s' for %s",
+                    self.name,
+                    students if students is not None else "all students.")
+
+    def unlock_submissions(self, course_id, students=None):
+        """
+        Locking submissions for this specific assignment.
+        """
+        students_ids = get_students(course_id, students)
+        mod_assign_unlock_submissions(self.uid, students_ids.keys())
+
+        logger.info("Locked submissions for assignment '%s' for %s",
+                    self.name,
+                    students if students is not None else "all students.")
+
+
+def mod_assign_lock_submissions(assignment_id, user_ids):
+    """
+    Locks submissions for a specific assignments for a specific user(s).
+    """
+    call_moodle_api('mod_assign_lock_submissions',
+                    assignmentid=assignment_id,
+                    userids=user_ids)
+
+
+def mod_assign_unlock_submissions(assignment_id, user_ids):
+    """
+    Unlocks submissions for a specific assignments for a specific user(s).
+    """
+    call_moodle_api('mod_assign_unlock_submissions',
+                    assignmentid=assignment_id,
+                    userids=user_ids)
+
 
 def mod_assign_get_grades(assignment_ids):
     """
     Returns the grades for all the assignments
     """
-    url = REQUEST_FORMAT.format('mod_assign_get_grades')
-    for i, assignment_id in enumerate(assignment_ids):
-        url += '&assignmentids[{}]={}'.format(i, assignment_id)
-    grades = {}
-    response = requests.get(url).json()
+    response = call_moodle_api('mod_assign_get_grades',
+                               assignmentids=assignment_ids)
 
+    grades = {}
     for grds in response['assignments']:
         grades[grds['assignmentid']] = grds['grades']
 
@@ -79,12 +116,58 @@ def mod_assign_get_grades(assignment_ids):
 
 def mod_assign_get_assignments(course_id):
     """
-    Returns a dictionary mapping assignment id to its name from a specified course
+    Returns a dictionary mapping assignment id to its name from a specified
+    course
     """
-    response = requests.get(
-        REQUEST_FORMAT.format('mod_assign_get_assignments') + '&courseids[0]={}'.format(course_id))
+    response = call_moodle_api('mod_assign_get_assignments',
+                               courseids=[course_id])
 
-    return response.json()["courses"][0]["assignments"]
+    return response["courses"][0]["assignments"]
+
+
+def get_assignments_by_field(course_id, field=None, assignments_fields=None):
+    """
+    Retrieves assignments, grades, and submissions from server and parses into
+    corresponding objects. This is a generic function to retrieve assignments
+    base on a specific field that is also received in the paramaters.
+
+    :param course_id: The ID of the course to retrieve its assignments
+    :param field: The field in the assignment by which to tell which
+    assignments to retrieve.
+    :param assignments_fields: The fields in the assignments by which to
+    retrieve the assignments. If the field `field` in the assignment is in
+    this list, then the assignment will be retrieved.
+    :return: List of Assignment() objects
+    """
+    assignments_not_found = []
+    all_assignment_jsons = mod_assign_get_assignments(course_id)
+    assignment_ids = [assign['id'] for assign in all_assignment_jsons]
+
+    grades = mod_assign_get_grades(assignment_ids)
+    submissions = mod_assign_get_submissions(assignment_ids)
+    assignments = []
+
+    if assignments_fields:
+        assignments_not_found = assignments_fields[:]
+
+    for assignment in all_assignment_jsons:
+        # Filter specific assignment IDs
+        if assignments_fields and field:
+            if assignment[field] not in assignments_fields:
+                continue
+
+        assignments.append(Assignment(assignment,
+                                      submissions.get(assignment['id'], []),
+                                      grades.get(assignment['id'], [])))
+
+        if assignments_not_found is not None:
+            assignments_not_found.remove(assignment[field])
+
+    if assignments_not_found:
+        logger.error("Could not find the following exercises for the trainer: "
+                     "%s", assignments_not_found)
+
+    return assignments
 
 
 def get_assignments(course_id, assignment_ids_to_get=None):
@@ -95,19 +178,26 @@ def get_assignments(course_id, assignment_ids_to_get=None):
     :param assignment_ids_to_get: Specific assignment IDs to retrieve.
     :return: List of Assignment() objects
     """
-    all_assignment_jsons = mod_assign_get_assignments(course_id)
-    assignment_ids = [assign['id'] for assign in all_assignment_jsons]
+    assignments = get_assignments_by_field(
+        course_id,
+        assignments_fields=assignment_ids_to_get,
+        field='cmid')
 
-    grades = mod_assign_get_grades(assignment_ids)
-    submissions = mod_assign_get_submissions(assignment_ids)
-    assignments = []
+    return assignments
 
-    for assignment in all_assignment_jsons:
-        # Filter specific assignment IDs
-        if assignment_ids_to_get and assignment['cmid'] not in assignment_ids_to_get:
-            continue
 
-        assignments.append(Assignment(assignment, submissions.get(assignment['id'], []), grades.get(assignment['id'], [])))
+def get_assignments_by_names(course_id, assignment_names_to_get=None):
+    """
+    Retrieves assignments, grades, and submissions from server and parses into corresponding objects.
+
+    :param course_id: The ID of the course to retrieve its assignments
+    :param assignment_names_to_get: Specific assignment names to retrieve.
+    :return: List of Assignment() objects
+    """
+    assignments = get_assignments_by_field(
+        course_id,
+        assignments_fields=assignment_names_to_get,
+        field='name')
 
     return assignments
 
@@ -130,49 +220,3 @@ def get_assignment_files(course_id, assignment_id):
         assignment_files.append(attachment)
 
     return assignment_files
-
-
-def get_assignments_details(course_id, assignments_list):
-    """
-    Returns a dictionary with a tuple for every assignment name in the list
-    received that looks like this: (assignment_id, assignment_section)
-    :param course_id: The ID of the course to retrieve the assignments from.
-    :param assignments_list: List of assignments names to retrieve their data.
-    :return: Dictionary of (assignment_id, assignment_section) for every
-    assignment.
-    """
-    assignments_dict = {}
-    assignments_set = set(assignments_list)
-
-    # Retrieve the contents of the course
-    sections = core_course_get_contents(course_id)
-
-    logger.info("Locating the exercises for trainer in the Moodle")
-
-    # Looking through the course contents trying to locate the assignment
-    for section in sections:
-        for module in section['modules']:
-            # We are only looking for assignments and no other resource in
-            # the moodle
-            if module['modname'] != 'assign':
-                continue
-
-            # Looking only for an exercise in the received list
-            if module['name'] not in assignments_set:
-                continue
-
-            # Retrieve all the assignment files
-            assignment_files = get_assignment_files(course_id, module['id'])
-
-            # Adding the results to the dictionary of assignments we are
-            # crafting for the caller
-            assignments_dict[module['name']] = (module['id'],
-                                                section['name'],
-                                                assignment_files)
-
-    assignments_not_found = assignments_set - set(assignments_dict.keys())
-    if assignments_not_found:
-        logger.error("Could not find the following exercises for the trainer: "
-                     "%s", assignments_not_found)
-
-    return assignments_dict
