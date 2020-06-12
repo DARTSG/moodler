@@ -15,8 +15,11 @@ REPORT_TICK_ITEM_PATTERN = r'<label>\s+<input type="hidden" name="itemids\[(' \
                            r'\d+)\]".*?>\s+([\[\]0-9\-_\w ]+)\s+</label>'
 REPORT_DOWNLOAD_SESSKEY_PATTERN = r'<input name="sesskey" type="hidden" ' \
                                   r'value="([\w\d]+)"'
+INVALID_REPORT_DOWNLOAD_PATTERN = '<b>Warning</b>'
 REPORT_OPTIONS_TO_IGNORE = ['Course total', 'Deletion in progress']
 REPORT_DIGITS_AFTER_DECIMAL_POINT = 2
+
+REPORT_FILE_NAME_FORMAT = '{} Report' + COURSE_REPORT_EXT
 
 
 class DownloadException(Exception):
@@ -24,6 +27,10 @@ class DownloadException(Exception):
 
 
 class InvalidReportDownloadPage(DownloadException):
+    pass
+
+
+class InvalidReportDownload(DownloadException):
     pass
 
 
@@ -130,14 +137,20 @@ def download_grading_worksheet(assignment_id,
     return grading_worksheet_file_name
 
 
-def download_course_grades_report(course_id, course_name, output_path, session):
+def download_course_grades_report(course_id,
+                                  course_name,
+                                  should_export_feedback,
+                                  output_path,
+                                  session):
     """
     Function for downloading the course grades reports from the Moodle UI.
     This function receives the course_id, and using regex, it parses the
     report download page and posts a request with the right information for
     downloading the submissions.
-    :param course_name: The name of the course to download its report.
     :param course_id: The ID of the course to download its report.
+    :param course_name: The name of the course to download its report.
+    :param should_export_feedback: Boolean flag to indicate whether the
+    report should include the feedbacks.
     :param output_path: The output path in which to save the course report.
     :param session: The session through which to send the get request to
     download the file.
@@ -200,8 +213,7 @@ def download_course_grades_report(course_id, course_name, output_path, session):
 
         body_params['itemids[{}]'.format(tick_index)] = tick_option
 
-    body_params['export_feedback'] = 1
-    body_params['export_onlyactive'] = 1
+    body_params['export_feedback'] = int(should_export_feedback)
     body_params['export_onlyactive'] = 1
     body_params['display[real]'] = 1
     body_params['display[precentage]'] = 0
@@ -211,12 +223,20 @@ def download_course_grades_report(course_id, course_name, output_path, session):
 
     # Executing the POST request.
     report_download_response = session.post(URL + '/grade/export/ods/export.php',
-                                            data=params)
+                                            data=body_params)
+
+    report_content = report_download_response.content
+
+    # Validating the returned report is valid.
+    if INVALID_REPORT_DOWNLOAD_PATTERN in str(report_content):
+        raise InvalidReportDownload('There has been a problem with the '
+                                    'received parameters for the download '
+                                    'POST request.')
 
     report_file_name = \
-        Path(output_path) / Path(course_name + COURSE_REPORT_EXT)
+        Path(output_path) / Path(REPORT_FILE_NAME_FORMAT.format(course_name))
 
     with report_file_name.open(mode='wb') as report_file:
-        report_file.write(report_download_response.content)
+        report_file.write(report_content)
 
     return report_file_name
