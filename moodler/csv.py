@@ -133,8 +133,13 @@ def write_output_csv(output_csv_path, submission_type, reader, first_row):
 
         row = first_row
 
-        # Write first line from source CSV
-        writer.writerow((row[0], row[1], row[2], row[3], row[4], row[9], row[10]))
+        try:
+            # Write first line from source CSV
+            writer.writerow((row[0], row[1], row[2], row[3], row[4], row[9], row[10]))
+        except IndexError:
+            raise InvalidCsv("There has been a problem with reading the CSV "
+                             "and writing it to the path: {}".format(
+                                output_csv_path))
 
         # To prevent the following exception:
         # _csv.Error: field larger than field limit (131072)
@@ -149,7 +154,12 @@ def write_output_csv(output_csv_path, submission_type, reader, first_row):
                 logger.debug("Student %s made a submission, ignoring it...", row[STUDENT_INDEX])
                 continue
 
-            writer.writerow((row[0], row[1], row[2], row[3], row[4], row[9], row[10]))
+            try:
+                writer.writerow((row[0], row[1], row[2], row[3], row[4], row[9], row[10]))
+            except IndexError:
+                raise InvalidCsv("There has been a problem with reading the CSV"
+                                 " and writing it to the path: {}".format(
+                                    output_csv_path))
             if is_resubmission(row[STATUS_INDEX]):
                 resubmissions_counter += 1
             else:
