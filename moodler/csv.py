@@ -85,7 +85,8 @@ def is_status_valid(status, submission_type):
 
     # Add entries based on the submission type defined in script
     #  and not SUB_TYPE_TO_STATUS[submissions_type](row[STATUS])
-    # UNGRADED: (lambda x: 'Submitted for grading' in x and 'follow up submission received' not in x),
+    # UNGRADED: (lambda x: 'Submitted for grading' in x and
+    # 'follow up submission received' not in x),
     if submission_type == ALL:
         return True
     elif submission_type == UNGRADED:
@@ -140,10 +141,14 @@ def handle_csv(csv_path, submission_type):
 
     # If this is a CSV we need to process, continue to processing
     output_csv_path = create_processed_path(csv_path)
-    submissions_counter, resubmissions_counter = write_output_csv(output_csv_path, submission_type, reader,
-                                                                  first_row)
+    submissions_counter, resubmissions_counter = write_output_csv(
+        output_csv_path,
+        submission_type,
+        reader,
+        first_row)
 
-    # Remove original file that we read from only if we passed the first line successfully
+    # Remove original file that we read from only if we passed the first line
+    # successfully
     os.remove(csv_path)
 
     # Sort target file by name
