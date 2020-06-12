@@ -64,6 +64,7 @@ def parse_args():
     parser_export.add_argument('course_id', type=int, help='The course id to query')
     parser_export.add_argument('download_folder', type=str,
                                   help='The folder to export to')
+    parser_export.set_defaults(which='export')
 
     parser_list_students = subparsers.add_parser('list_students',
                                                  help='List names of all students')
