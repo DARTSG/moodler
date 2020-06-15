@@ -6,14 +6,13 @@ class Feedback(object):
         self.uid = uid
         self.name = name
         self.responses_count = answers_json['completedcount']
-        self.questions = set()
+        self.answers = {}
 
-        self.responses = [[] for i in range(self.responses_count)]
-
-        for question in answers_json['itemsdata']:
-            self.questions.add(question['item']['name'])
-            for i, answer in enumerate(question['data']):
-                self.responses[i].append(answer)
+        for question_json in answers_json['itemsdata']:
+            question = question_json['item']['name']
+            self.answers[question] = []
+            for answer in question_json['data']:
+                self.answers[question].append(answer)
 
     def __repr__(self):
         return 'Feedback(uid={}, name={}, answers={})'.format(self.uid, self.name, self.responses_count)
