@@ -95,8 +95,8 @@ def export_feedbacks(course_id, folder):
         file_path = Path(folder) / Path(feedback.name)
         with open(str(file_path) + '.csv', 'w', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow(feedback.questions)
-            writer.writerows(feedback.responses)
+            writer.writerow(feedback.answers.keys())
+            writer.writerows(zip(*feedback.answers.values()))
 
 
 def export_submissions(course_id, download_folder):
