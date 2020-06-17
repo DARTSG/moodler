@@ -3,12 +3,13 @@ from pathlib import Path
 import csv
 
 from moodler.assignment import get_assignments
-from moodler.config import STUDENTS_TO_IGNORE
+from moodler.config import STUDENTS_TO_IGNORE, MOODLE_USERNAME, MOODLE_PASSWORD
 from moodler.download import download_file, download_submission, \
         download_course_grades_report
+from moodler.moodle_connect import connect_to_server
 from moodler.feedbacks import feedbacks
 from moodler.students import get_students
-from moodler.sections import core_course_get_contents
+from moodler.sections import core_course_get_contents, locate_course_name
 
 logger = logging.getLogger(__name__)
 
@@ -153,11 +154,12 @@ def export_grades(course_id, output_path, should_export_feedback=False):
     course_name = locate_course_name(course_id)
     session = connect_to_server(MOODLE_USERNAME, MOODLE_PASSWORD)
 
-    grades_spreadsheet_file = download_course_grades_report(course_id,
-                                                            course_name,
-                                                            should_export_feedback,
-                                                            output_path,
-                                                            session)
+    grades_spreadsheet_file = download_course_grades_report(
+        course_id,
+        course_name,
+        should_export_feedback,
+        output_path,
+        session)
 
     logger.info("Downloaded the file '%s' as the grades exported spreadsheet")
 

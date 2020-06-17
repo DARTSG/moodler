@@ -7,7 +7,7 @@ from moodler.config import TOKEN, URL
 
 ASSIGNMENT_WORKSHEET_EXT = '.csv'
 ASSIGNMENT_ALL_SUBMISSIONS_EXT = '.zip'
-COURSE_REPORT_EXT = '.ods'
+COURSE_REPORT_EXT = '.csv'
 
 # Pattern to locate the ticks in the web page to create the report download
 # request.
@@ -157,7 +157,7 @@ def download_course_grades_report(course_id,
     """
     params = {'id': course_id}
     report_download_page_response = session.get(URL +
-                                                '/grade/export/ods/index.php',
+                                                '/grade/export/txt/index.php',
                                                 params=params)
 
     # Decoding and retrieving the content of the download page
@@ -218,11 +218,13 @@ def download_course_grades_report(course_id,
     body_params['display[real]'] = 1
     body_params['display[precentage]'] = 0
     body_params['display[letter]'] = 0
-    body_params['decimal'] = REPORT_DIGITS_AFTER_DECIMAL_POINT
+    body_params['decimals'] = REPORT_DIGITS_AFTER_DECIMAL_POINT
+    body_params['separator'] = 'comma'
     body_params['submitbutton'] = 'Download'
 
     # Executing the POST request.
-    report_download_response = session.post(URL + '/grade/export/ods/export.php',
+    report_download_response = session.post(URL +
+                                            '/grade/export/txt/export.php',
                                             data=body_params)
 
     report_content = report_download_response.content
