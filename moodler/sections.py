@@ -116,8 +116,8 @@ def locate_course_id(course_name, course_prefix, courses_list):
         if course_name in course.full_name or course_name in course.short_name:
             return course.id
 
-    raise CourseNotFoundInMoodle("The course name you have used '%s' was not "
-                                 "found in the Moodle")
+    raise CourseNotFoundInMoodle("The course name you have used '{}' was not "
+                                 "found in the Moodle".format(course_name))
 
 
 def locate_course_name(course_id, course_prefix=None):
@@ -153,12 +153,16 @@ def get_assignments_by_section(course_id,
     """
     exercises_by_sections = {}
     sections_not_found = []
+    assignments_not_found = []
 
     # Retrieve the contents of the course
     sections = core_course_get_contents(course_id)
 
     if sections_names is not None:
         sections_not_found = sections_names[:]
+
+    if assignments_names is not None:
+        assignments_not_found = assignments_names[:]
 
     # Looking through the course contents trying to locate the assignment
     for section in sections:
@@ -183,6 +187,8 @@ def get_assignments_by_section(course_id,
                 if module['name'] not in assignments_names:
                     continue
 
+                assignments_not_found.remove(module['name'])
+
             current_section_assignments.append(module['id'])
 
         if current_section_assignments:
@@ -193,5 +199,9 @@ def get_assignments_by_section(course_id,
     if sections_not_found:
         logger.error("Could not find the following sections: %s",
                      sections_not_found)
+
+    if assignments_not_found:
+        logger.error("Could not find the following assignments: %s",
+                     assignments_not_found)
 
     return exercises_by_sections
