@@ -3,11 +3,13 @@ from pathlib import Path
 import csv
 
 from moodler.assignment import get_assignments
-from moodler.config import STUDENTS_TO_IGNORE
-from moodler.download import download_file, download_submission
+from moodler.config import STUDENTS_TO_IGNORE, MOODLE_USERNAME, MOODLE_PASSWORD
+from moodler.download import download_file, download_submission, \
+        download_course_grades_report
+from moodler.moodle_connect import connect_to_server
 from moodler.feedbacks import feedbacks
 from moodler.students import get_students
-from moodler.sections import core_course_get_contents
+from moodler.sections import core_course_get_contents, locate_course_name
 
 logger = logging.getLogger(__name__)
 
@@ -145,31 +147,21 @@ def export_materials(course_id, folder):
                     download_file(attachment, section_folder)
 
 
-def export_grades(course_id, folder):
+def export_grades(course_id, output_path, should_export_feedback=False):
     """
     Exports the complete grade file to the given folder in csv format
     """
-    users_map = get_students(course_id)
-    usernames = list(users_map.values())
-    grades = [[] for i in usernames]
-    exercise_names = []
+    course_name = locate_course_name(course_id)
+    session = connect_to_server(MOODLE_USERNAME, MOODLE_PASSWORD)
 
-    # Build a structure of {'exercise': {'student': grade, 'student2': grade}}
-    for assign in get_assignments(course_id):
-        exercise_names.append(assign.name)
-        students_not_submitted = list(usernames)
-        for submission in assign.submissions:
-            grades[usernames.index(users_map[submission.user_id])].append(submission.grade.grade if submission.grade else 0)
-            students_not_submitted.remove(users_map[submission.user_id])
-        # Just grade users that did not submit an assignment with a 0
-        for student in students_not_submitted:
-            grades[usernames.index(student)].append(0)
+    grades_spreadsheet_file = download_course_grades_report(
+        course_id,
+        course_name,
+        should_export_feedback,
+        output_path,
+        session)
 
-    with open(Path(folder) / 'Grades.csv', 'w', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow(['Student Name'] + exercise_names + ['Total'])
-        for i, row in enumerate(grades):
-            writer.writerow([usernames[i]] + row + [sum(row)])
+    logger.info("Downloaded the file '%s' as the grades exported spreadsheet")
 
 
 def export_all(course_id, folder):

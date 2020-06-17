@@ -13,6 +13,18 @@ UNGRADED = 'ungraded'
 BIG_NUMBER_FOR_FIELD_MAX = 0x1000000
 
 # Indexes are by order for 'Maximum Grade', 'Grade can be changed', 'Last modified (submission)', 'Online text'
+GRADING_SHEET_VALID_HEADERS = ['Identifier',
+                               'Full name',
+                               'Email address',
+                               'Status',
+                               'Grade',
+                               'Maximum Grade',
+                               'Grade can be changed',
+                               'Last modified (submission)',
+                               'Online text',
+                               'Last modified (grade)',
+                               'Feedback comments']
+GRADING_SHEET_VALID_HEADERS_COUNT = len(GRADING_SHEET_VALID_HEADERS)
 COLUMNS_TO_REMOVE = [5, 6, 7, 8]
 
 # TODO change to DictReader so no need for this shit. Even better use pandas but fuck that
@@ -73,7 +85,8 @@ def is_status_valid(status, submission_type):
 
     # Add entries based on the submission type defined in script
     #  and not SUB_TYPE_TO_STATUS[submissions_type](row[STATUS])
-    # UNGRADED: (lambda x: 'Submitted for grading' in x and 'follow up submission received' not in x),
+    # UNGRADED: (lambda x: 'Submitted for grading' in x and
+    # 'follow up submission received' not in x),
     if submission_type == ALL:
         return True
     elif submission_type == UNGRADED:
@@ -82,6 +95,22 @@ def is_status_valid(status, submission_type):
 
     # First line - just include it
     assert status.startswith('Submitted for grading') and not status.endswith('Graded')
+
+
+def is_row_valid(row):
+    """
+    Validating the row contains all the rows required in a CSV downloaded
+    from Moodle.
+    """
+    return GRADING_SHEET_VALID_HEADERS_COUNT == len(row)
+
+
+def are_headers_valid(headers_row):
+    """
+    Validating the row contains all the rows required in a CSV downloaded
+    from Moodle.
+    """
+    return GRADING_SHEET_VALID_HEADERS == headers_row
 
 
 def create_processed_path(csv_path):
@@ -112,10 +141,14 @@ def handle_csv(csv_path, submission_type):
 
     # If this is a CSV we need to process, continue to processing
     output_csv_path = create_processed_path(csv_path)
-    submissions_counter, resubmissions_counter = write_output_csv(output_csv_path, submission_type, reader,
-                                                                  first_row)
+    submissions_counter, resubmissions_counter = write_output_csv(
+        output_csv_path,
+        submission_type,
+        reader,
+        first_row)
 
-    # Remove original file that we read from only if we passed the first line successfully
+    # Remove original file that we read from only if we passed the first line
+    # successfully
     os.remove(csv_path)
 
     # Sort target file by name
@@ -133,6 +166,12 @@ def write_output_csv(output_csv_path, submission_type, reader, first_row):
 
         row = first_row
 
+        if not are_headers_valid(row):
+            raise InvalidCsv("There has been a problem with reading the CSV "
+                             "and writing it to the path: {}. Invalid headers "
+                             "content: {}".format(
+                                output_csv_path, row))
+
         # Write first line from source CSV
         writer.writerow((row[0], row[1], row[2], row[3], row[4], row[9], row[10]))
 
@@ -141,6 +180,12 @@ def write_output_csv(output_csv_path, submission_type, reader, first_row):
         csv.field_size_limit(BIG_NUMBER_FOR_FIELD_MAX)
 
         for row in reader:
+            # Verify that the row is valid
+            if not is_row_valid(row):
+                raise InvalidCsv("There has been a problem with reading the CSV"
+                                 " and writing it to the path: {}. Invalid "
+                                 "row content: {}".format(output_csv_path, row))
+
             # Verify that the submission is of the status we're looking for
             if not is_status_valid(row[STATUS_INDEX], submission_type):
                 continue
@@ -150,6 +195,7 @@ def write_output_csv(output_csv_path, submission_type, reader, first_row):
                 continue
 
             writer.writerow((row[0], row[1], row[2], row[3], row[4], row[9], row[10]))
+
             if is_resubmission(row[STATUS_INDEX]):
                 resubmissions_counter += 1
             else:
