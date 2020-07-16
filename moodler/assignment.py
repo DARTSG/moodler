@@ -88,7 +88,7 @@ class Assignment(object):
         # it to list.
         mod_assign_unlock_submissions(self.uid, list(students_ids.keys()))
 
-        logger.info("Locked submissions for assignment '%s' for %s",
+        logger.info("Unlocked submissions for assignment '%s' for %s",
                     self.name,
                     students if students is not None else "all students.")
 
