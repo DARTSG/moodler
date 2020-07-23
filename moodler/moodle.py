@@ -14,7 +14,7 @@ from moodler.sections import core_course_get_contents, locate_course_name
 logger = logging.getLogger(__name__)
 
 
-def ungraded_submissions(course_id, is_verbose=False, download_folder=None):
+def submissions_statistics(course_id, is_verbose=False, download_folder=None):
     """
     Returns a dictionary describing the status of ungraded exercises in the course.
     The dictionary looks like this:
@@ -23,7 +23,14 @@ def ungraded_submissions(course_id, is_verbose=False, download_folder=None):
             'total_submissions': 10,
             'total_ungraded': 5,
             'total_resubmissions': 2,
-            'ungraded': [{ 'name': 'assign1', 'ungraded': 2, 'resubmissions': 0}]
+            'exercises': {
+                'assign1': {
+                    'submissions': 2,
+                    'ungraded': 2,
+                    'resubmissions': 0}
+                },
+                ...
+            }
         }
         ```
 
@@ -33,21 +40,22 @@ def ungraded_submissions(course_id, is_verbose=False, download_folder=None):
     total_submissions = 0
     total_ungraded = 0
     total_resubmissions = 0
-    ungraded_assignments = []
+    assignments_statistics = {}
 
     assignments = get_assignments(course_id)
     users_map = get_students(course_id)
 
     for assignment in assignments:
-        ungraded = assignment.ungraded()
-        total_submissions += len(assignment.submissions)
-        total_ungraded += len(ungraded)
-        resubmissions = 0
+        current_assignment_submissions_amount = len(assignment.submissions)
+        current_assignment_ungraded = assignment.ungraded()
+        current_assignment_ungraded_amount = len(current_assignment_ungraded)
+
+        current_assignment_resubmissions_amount = 0
         ungraded_ignored = []
 
-        for submission in ungraded:
+        for submission in current_assignment_ungraded:
             if submission.resubmitted:
-                resubmissions += 1
+                current_assignment_resubmissions_amount += 1
 
             if submission.user_id in STUDENTS_TO_IGNORE.keys():
                 ungraded_ignored.append(STUDENTS_TO_IGNORE[submission.user_id])
@@ -56,7 +64,9 @@ def ungraded_submissions(course_id, is_verbose=False, download_folder=None):
                 download_submission(assignment.name, users_map[submission.user_id],
                                     submission, download_folder)
 
-        total_resubmissions += resubmissions
+        total_submissions += current_assignment_submissions_amount
+        total_ungraded += current_assignment_ungraded_amount
+        total_resubmissions += current_assignment_resubmissions_amount
 
         # Print total stats about this assignment
         if is_verbose and len(ungraded_ignored) != 0:
@@ -64,23 +74,23 @@ def ungraded_submissions(course_id, is_verbose=False, download_folder=None):
                         len(ungraded_ignored), assignment.name, assignment.cmid,
                         assignment.uid, ungraded_ignored)
 
-        amount_ungraded_not_ignored = len(ungraded) - len(ungraded_ignored)
+        amount_ungraded_not_ignored = current_assignment_ungraded_amount - len(ungraded_ignored)
         if amount_ungraded_not_ignored != 0:
             logger.info("Total ungraded for assignment '%s' (CMID %s, ID %s): %s/%s",
                         assignment.name, assignment.cmid, assignment.uid,
                         amount_ungraded_not_ignored, len(assignment.submissions))
 
-            ungraded_assignments.append({
-                'name': assignment.name,
-                'ungraded': amount_ungraded_not_ignored,
-                'resubmissions': resubmissions
-            })
+        assignments_statistics[assignment.name] = {
+            'submissions': current_assignment_submissions_amount,
+            'ungraded': amount_ungraded_not_ignored,
+            'resubmissions': current_assignment_resubmissions_amount
+        }
 
     return {
         'total_submissions': total_submissions,
         'total_ungraded': total_ungraded,
         'total_resubmissions': total_resubmissions,
-        'ungraded': ungraded_assignments
+        'exercises': assignments_statistics
     }
 
 

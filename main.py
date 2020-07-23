@@ -27,7 +27,7 @@ import argparse
 import logging
 from pprint import pprint
 
-from moodler.moodle import export_all, export_feedbacks, ungraded_submissions
+from moodler.moodle import export_all, export_feedbacks, submissions_statistics
 from moodler.students import get_students
 
 logger = logging.getLogger(__name__)
@@ -82,8 +82,10 @@ def main():
     if 'none' == args.which:
         parser.print_help()
     elif 'ungraded' == args.which:
-        ungraded = ungraded_submissions(args.course_id, is_verbose=args.verbose, download_folder=args.download_folder)
-        print("Total ungraded: {}".format(ungraded['total_ungraded']))
+        submissions_status = submissions_statistics(args.course_id,
+                                                    is_verbose=args.verbose,
+                                                    download_folder=args.download_folder)
+        print("Total ungraded: {}".format(submissions_status['total_ungraded']))
     elif args.which == 'list_students':
         pprint(get_students(args.course_id))
     elif 'feedbacks' == args.which:
