@@ -1,4 +1,5 @@
 import logging
+from parse import parse
 
 from moodler.assignment import get_assignments
 from moodler.moodle_api import call_moodle_api
@@ -135,7 +136,8 @@ def locate_course_name(course_id, course_prefix=None):
 
         if (course_prefix in course.full_name) or \
                 (course_prefix in course.short_name):
-            return course.full_name.lstrip(course_prefix).strip()
+            course_name_format = f"{course_prefix} - " + "{course_name}"
+            return parse(course_name_format, course.full_name)['course_name']
 
         raise CoursePrefixNotFound("The course corresponding to the ID "
                                    "received does not contained the prefix "
