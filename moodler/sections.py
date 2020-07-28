@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 from parse import parse
 
 from moodler.assignment import get_assignments
@@ -152,55 +153,49 @@ def get_assignments_by_section(course_id, sections_names=None, assignments_names
     """
     Retrieving assignments by sections.
     """
-    exercises_by_sections = {}
-    sections_not_found = []
-    assignments_not_found = []
-
     # Retrieve the contents of the course
     sections = core_course_get_contents(course_id)
 
     if sections_names is not None:
-        sections_not_found = sections_names[:]
+        # Filter out section names
+        sections = [section for section in sections if section["name"] not in sections_names]
+
+        found_sections = set(section["name"] for section in sections)
+        missing_sections = set(sections_names).difference(found_sections)
+
+        if missing_sections:
+            logger.error("Could not find the following sections: %s", list(missing_sections))
 
     if assignments_names is not None:
-        assignments_not_found = assignments_names[:]
+        # Handle missing assignments
+        found_assignments = set(
+            [module["name"] for section in sections for module in section["modules"]]
+        )
+
+        missing_assignments = set(assignments_names).difference(found_assignments)
+        if missing_assignments:
+            logger.error("Could not find the following assignments: %s", missing_assignments)
+
+    assignment_id_to_section = {}
 
     # Looking through the course contents trying to locate the assignment
     for section in sections:
-        # Making sure this section is one of the sections we are supposed to
-        # be looking at, unless the list is None
-        if sections_names is not None:
-            if section["name"] not in sections_names:
-                continue
-
-            sections_not_found.remove(section["name"])
-
-        current_section_assignments = []
         for module in section["modules"]:
-            # We are only looking for assignments and no other resource in
-            # the moodle
+            # Filter only assignments in moodle
             if module["modname"] != "assign":
                 continue
 
-            # Looking only for an exercise in the received list, unless it is
-            # None
-            if assignments_names is not None:
-                if module["name"] not in assignments_names:
-                    continue
+            # Filter assignments by name
+            if assignments_names and not module["name"] in assignments_names:
+                continue
 
-                assignments_not_found.remove(module["name"])
+            assignment_id_to_section[module["id"]] = section["name"]
 
-            current_section_assignments.append(module["id"])
+    assignments = get_assignments(course_id, list(assignment_id_to_section.keys()))
+    assignments_by_section = defaultdict(list)
 
-        if current_section_assignments:
-            exercises_by_sections[section["name"]] = get_assignments(
-                course_id, current_section_assignments
-            )
+    for assignment in assignments:
+        section_name = assignment_id_to_section[assignment.cmid]
+        assignments_by_section[section_name].append(assignment)
 
-    if sections_not_found:
-        logger.error("Could not find the following sections: %s", sections_not_found)
-
-    if assignments_not_found:
-        logger.error("Could not find the following assignments: %s", assignments_not_found)
-
-    return exercises_by_sections
+    return assignments_by_section
