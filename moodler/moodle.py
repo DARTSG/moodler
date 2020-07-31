@@ -5,7 +5,7 @@ import csv
 from moodler.assignment import get_assignments
 from moodler.config import STUDENTS_TO_IGNORE, MOODLE_USERNAME, MOODLE_PASSWORD
 from moodler.download import download_file, download_submission, \
-        download_course_grades_report
+        download_course_grades_report, DownloadException
 from moodler.moodle_connect import connect_to_server
 from moodler.feedbacks import feedbacks
 from moodler.students import get_students
@@ -136,17 +136,23 @@ def export_materials(course_id, folder):
             # Create section folder
             if module['modname'] in ['feedback', 'forum']:
                 continue
-            elif module['modname'] == 'resource':
+
+            # If this is a downloadable module, create the section
+            if module['modname'] in ('resource', 'folder', 'assign'):
                 if section['name'] not in created:
                     section_folder.mkdir(parents=True, exist_ok=True)
                     created.add(section['name'])
-                # If module is a resource - download it
+
+            if module['modname'] in ('resource', 'folder'):
+                download_folder = section_folder
+                # If its a folder, create a subfolder
+                if module['modname'] == 'folder':
+                    download_folder = download_folder / Path(module['name'])
+                    download_folder.mkdir(parents=True)
+
                 for resource in module['contents']:
-                    download_file(resource['fileurl'], section_folder)
+                    download_file(resource['fileurl'], download_folder)
             elif module['modname'] == 'assign':
-                if section['name'] not in created:
-                    section_folder.mkdir(parents=True, exist_ok=True)
-                    created.add(section['name'])
                 # If module is an assignment - download attachments and description
                 assign = assigns[module['instance']]
                 if len(assign.description) > 0:
@@ -155,6 +161,9 @@ def export_materials(course_id, folder):
                         f.write(assign.description)
                 for attachment in assign.attachments:
                     download_file(attachment, section_folder)
+            else:
+                logger.warn("Skipped export from unknown module '%s'",
+                             module['modname'])
 
 
 def export_grades(course_id, output_path, should_export_feedback=False):
@@ -164,14 +173,18 @@ def export_grades(course_id, output_path, should_export_feedback=False):
     course_name = locate_course_name(course_id)
     session = connect_to_server(MOODLE_USERNAME, MOODLE_PASSWORD)
 
-    grades_spreadsheet_file = download_course_grades_report(
-        course_id,
-        course_name,
-        should_export_feedback,
-        output_path,
-        session)
+    try:
+        grades_spreadsheet_file = download_course_grades_report(
+            course_id,
+            course_name,
+            should_export_feedback,
+            output_path,
+            session)
 
-    logger.info("Downloaded the file '%s' as the grades exported spreadsheet")
+        logger.info("Downloaded the file '%s' as the grades exported spreadsheet", grades_spreadsheet_file)
+    except DownloadException:
+        logger.exception("Failed downloading grade report")
+
 
 
 def export_all(course_id, folder):
