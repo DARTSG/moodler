@@ -75,12 +75,12 @@ def list_courses(course_prefix=None):
 
     for course in courses_from_moodle:
         if course_prefix is not None:
-            if (course_prefix not in course["shortname"]) and (
-                course_prefix not in course["fullname"]
-            ):
-                continue
-
-        courses_list.append(Course(course["id"], course["shortname"], course["fullname"]))
+            if not (course["shortname"].starts_with(course_prefix) or
+                    course["fullname"].starts_with(course_prefix)):
+                courses_list.append(Course(
+                    course["id"],
+                    course["shortname"],
+                    course["fullname"]))
 
     return courses_list
 
@@ -186,7 +186,7 @@ def get_assignments_by_section(course_id, sections_names=None, assignments_names
                 continue
 
             # Filter assignments by name
-            if assignments_names and not module["name"] in assignments_names:
+            if assignments_names and module["name"] not in assignments_names:
                 continue
 
             assignment_id_to_section[module["id"]] = section["name"]
