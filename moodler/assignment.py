@@ -65,7 +65,10 @@ class Assignment(object):
         Locking submissions for this specific assignment.
         """
         students_ids = get_students_ids_by_name(course_id, students)
-        mod_assign_lock_submissions(self.uid, students_ids)
+        if not students_ids and students is not None:
+            logger.info("No student was found! Aborting...")
+        else:
+            mod_assign_lock_submissions(self.uid, students_ids)
 
         logger.info("Locked submissions for assignment '%s' for %s",
                     self.name,
@@ -76,7 +79,10 @@ class Assignment(object):
         Locking submissions for this specific assignment.
         """
         students_ids = get_students_ids_by_name(course_id, students)
-        mod_assign_unlock_submissions(self.uid, students_ids)
+        if not students_ids and students is not None:
+            logger.info("No student was found! Aborting...")
+        else:
+            mod_assign_unlock_submissions(self.uid, students_ids)
 
         logger.info("Unlocked submissions for assignment '%s' for %s",
                     self.name,
