@@ -6,8 +6,6 @@ from moodler.moodle_api import call_moodle_api, validate_response
 
 logger = logging.getLogger(__name__)
 
-INVALID_STUDENT_ID = -1
-
 
 class TwoStudentsFoundConflict(Exception):
     pass
@@ -23,46 +21,60 @@ def core_enrol_get_enrolled_users(course_id):
     return response
 
 
-def is_student_in_names(students_names_dict, enrolled):
+def get_students_ids_by_name(course_id, students_names: list):
     """
-    Check whether the student enrolled is in the list of names received.
+    The function is locating students IDs according to their name. The function
+    receives a list of names to search in the enrolled students of the course
+    and will try to locate these students in the course. It will return the
+    IDs of all of the students it has found.
+    :param course_id: The ID of the course in which to locate the students.
+    :param students_names: The list of students to search in the course.
     """
-    for student_name, was_student_found in students_names_dict.items():
-        if student_name.lower() in enrolled['fullname'].lower():
+    students_names_to_ids_dict = {}
+
+    for student_name in students_names:
+        for enrolled in core_enrol_get_enrolled_users(course_id):
+            if enrolled['roles'][0]['shortname'] != 'student':
+                continue
+
+            # Trying to locate a student that has a similar name to one of
+            # the names received in the input list.
+            if student_name.lower() not in enrolled['fullname'].lower():
+                continue
+
+            # At this point, we have found a student in the course that has a
+            # similar name to one of the names in the input list students_names
             logger.info("Found student '%s' for the received name '%s'",
                         enrolled['fullname'],
                         student_name)
 
-            if was_student_found:
+            if student_name not in students_names_to_ids_dict:
+                students_names_to_ids_dict[student_name] = enrolled['id']
+
+            # If we have already found this student in the course, that means
+            # that the specified name in the list is not specific enough and
+            # fits more than one names in the course.
+            # We do not want duplications!
+            else:
                 logger.error("Already found student - skipping this name")
-                return False
+                del students_names_to_ids_dict[student_name]
 
-            students_names_dict[student_name] = True
-
-    return False
+    return list(students_names_to_ids_dict.values())
 
 
-def get_students(course_id, students_names: list = None):
+def get_students(course_id):
     """
     Get only the students enrolled in a course
     """
-    enrolled_students = {}
-    students_names_dict = None
-
-    if students_names is not None:
-        students_names_dict = dict.fromkeys(students_names, False)
+    output_enrolled_students = {}
 
     for enrolled in core_enrol_get_enrolled_users(course_id):
         if enrolled['roles'][0]['shortname'] != 'student':
             continue
 
-        if students_names_dict is not None:
-            if not is_student_in_names(students_names_dict, enrolled):
-                continue
+        output_enrolled_students[enrolled['id']] = enrolled['fullname']
 
-        enrolled_students[enrolled['id']] = enrolled['fullname']
-
-    return enrolled_students
+    return output_enrolled_students
 
 
 def list_students():

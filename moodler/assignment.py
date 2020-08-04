@@ -3,7 +3,7 @@ import requests
 
 from moodler.config import URL
 from moodler.moodle_api import call_moodle_api
-from moodler.students import get_user_name, get_students
+from moodler.students import get_user_name, get_students_ids_by_name
 from moodler.submission import Submission, mod_assign_get_submissions, MissingGrade
 
 logger = logging.getLogger(__name__)
@@ -64,13 +64,8 @@ class Assignment(object):
         """
         Locking submissions for this specific assignment.
         """
-        students_ids = get_students(course_id, students)
-        # We are using the list(.keys()) since the function expects to
-        # receive a list of IDs while get_students returns a dictionary of
-        # IDs as keys and names as values. So, to avoid this we use the keys.
-        # Now, the type of dictionary keys is dict_keys, so we have to case
-        # it to list.
-        mod_assign_lock_submissions(self.uid, list(students_ids.keys()))
+        students_ids = get_students_ids_by_name(course_id, students)
+        mod_assign_lock_submissions(self.uid, students_ids)
 
         logger.info("Locked submissions for assignment '%s' for %s",
                     self.name,
@@ -80,13 +75,8 @@ class Assignment(object):
         """
         Locking submissions for this specific assignment.
         """
-        students_ids = get_students(course_id, students)
-        # We are using the list(.keys()) since the function expects to
-        # receive a list of IDs while get_students returns a dictionary of
-        # IDs as keys and names as values. So, to avoid this we use the keys.
-        # Now, the type of dictionary keys is dict_keys, so we have to case
-        # it to list.
-        mod_assign_unlock_submissions(self.uid, list(students_ids.keys()))
+        students_ids = get_students_ids_by_name(course_id, students)
+        mod_assign_unlock_submissions(self.uid, students_ids)
 
         logger.info("Unlocked submissions for assignment '%s' for %s",
                     self.name,
