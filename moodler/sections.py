@@ -74,13 +74,13 @@ def list_courses(course_prefix=None):
         raise EmptyCoursesList("The Moodle has returned an empty courses list")
 
     for course in courses_from_moodle:
-        if course_prefix is not None:
-            if not (course["shortname"].starts_with(course_prefix) or
-                    course["fullname"].starts_with(course_prefix)):
-                courses_list.append(Course(
-                    course["id"],
-                    course["shortname"],
-                    course["fullname"]))
+        if (course_prefix is None) or \
+                course["shortname"].starts_with(course_prefix) or \
+                course["fullname"].starts_with(course_prefix):
+            courses_list.append(Course(
+                course["id"],
+                course["shortname"],
+                course["fullname"]))
 
     return courses_list
 
