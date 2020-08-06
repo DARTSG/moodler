@@ -150,6 +150,10 @@ def get_assignments_by_field(course_id, field=None, assignments_fields=None):
     all_assignment_jsons = mod_assign_get_assignments(course_id)
     assignment_ids = [assign['id'] for assign in all_assignment_jsons]
 
+    if not assignment_ids:
+        logger.warning("No assignments were detected for course %s", course_id)
+        return assignment_ids
+
     grades = mod_assign_get_grades(assignment_ids)
     submissions = mod_assign_get_submissions(assignment_ids)
     assignments = []

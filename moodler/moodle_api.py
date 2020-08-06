@@ -19,11 +19,24 @@ def validate_response(function_name, response):
     Function that validates whether the response received is a valid response or
     is it an exception.
     """
-    if 'exception' in response:
-        raise MoodleAPIException("Moodle API call for function '{}' returned "
-                                 "an exception response with the following "
-                                 "message: {}".format(function_name,
-                                                      response['message']))
+    # In some of the moodle requests a list is returned instead
+    if isinstance(response, dict):
+        if "exception" in response:
+            raise MoodleAPIException(
+                "Moodle API call for function '{}' returned "
+                "an exception response with the following "
+                "message: {}".format(function_name, response["message"])
+            )
+
+        if response.get("warnings", []):
+            # Warning example:
+            # User is not enrolled or does not have requested capability
+
+            raise MoodleAPIException(
+                "Moodle API call for function '%s' returned the following warning: %s",
+                function_name,
+                "".join(response.warnings),
+            )
 
 
 def build_url(moodle_function, **kwargs):
@@ -39,11 +52,11 @@ def build_url(moodle_function, **kwargs):
         if isinstance(arg_value, list):
             # Appending the list of arguments into the URL for the request
             for i, arg_value_item in enumerate(arg_value):
-                url += '&{}[{}]={}'.format(arg_name, i, arg_value_item)
+                url += "&{}[{}]={}".format(arg_name, i, arg_value_item)
 
         else:
             # Appending the argument into the URL as a parameter.
-            url += '&{}={}'.format(arg_name, arg_value)
+            url += "&{}={}".format(arg_name, arg_value)
 
     return url
 
