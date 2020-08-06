@@ -162,8 +162,8 @@ def export_materials(course_id, folder):
                 for attachment in assign.attachments:
                     download_file(attachment, section_folder)
             else:
-                logger.warn("Skipped export from unknown module '%s'",
-                             module['modname'])
+                logger.warning("Skipped export from unknown module '%s'",
+                               module['modname'])
 
 
 def export_grades(course_id, output_path, should_export_feedback=False):
