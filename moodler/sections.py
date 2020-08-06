@@ -74,13 +74,14 @@ def list_courses(course_prefix=None):
         raise EmptyCoursesList("The Moodle has returned an empty courses list")
 
     for course in courses_from_moodle:
-        if course_prefix is None or \
-                course["shortname"].starts_with(course_prefix) or \
-                course["fullname"].starts_with(course_prefix):
-            courses_list.append(Course(
-                course["id"],
-                course["shortname"],
-                course["fullname"]))
+        if (
+            course_prefix is None
+            or course["shortname"].starts_with(course_prefix)
+            or course["fullname"].starts_with(course_prefix)
+        ):
+            courses_list.append(
+                Course(course["id"], course["shortname"], course["fullname"])
+            )
 
     return courses_list
 
@@ -112,7 +113,8 @@ def locate_course_id(course_name, course_prefix, courses_list):
 
     if not courses:
         raise CoursePrefixNotFound(
-            "No course in the Moodle was found with " "the prefix set in the configuration '%s'",
+            "No course in the Moodle was found with "
+            "the prefix set in the configuration '%s'",
             course_prefix,
         )
 
@@ -121,7 +123,8 @@ def locate_course_id(course_name, course_prefix, courses_list):
             return course.id
 
     raise CourseNotFoundInMoodle(
-        "The course name you have used '{}' was not " "found in the Moodle".format(course_name)
+        "The course name you have used '{}' was not "
+        "found in the Moodle".format(course_name)
     )
 
 
@@ -146,7 +149,9 @@ def locate_course_name(course_id, course_prefix=None):
             "The course corresponding to the ID received does not contained the prefix determined."
         )
 
-    raise CourseNotFoundInMoodle("No course with the ID received has been found in the Moodle.")
+    raise CourseNotFoundInMoodle(
+        "No course with the ID received has been found in the Moodle."
+    )
 
 
 def get_assignments_by_section(course_id, sections_names=None, assignments_names=None):
@@ -158,13 +163,17 @@ def get_assignments_by_section(course_id, sections_names=None, assignments_names
 
     if sections_names is not None:
         # Filter out section names
-        sections = [section for section in sections if section["name"] not in sections_names]
+        sections = [
+            section for section in sections if section["name"] not in sections_names
+        ]
 
         found_sections = set(section["name"] for section in sections)
         missing_sections = set(sections_names).difference(found_sections)
 
         if missing_sections:
-            logger.error("Could not find the following sections: %s", list(missing_sections))
+            logger.error(
+                "Could not find the following sections: %s", list(missing_sections)
+            )
 
     if assignments_names is not None:
         # Handle missing assignments
@@ -174,7 +183,9 @@ def get_assignments_by_section(course_id, sections_names=None, assignments_names
 
         missing_assignments = set(assignments_names).difference(found_assignments)
         if missing_assignments:
-            logger.error("Could not find the following assignments: %s", missing_assignments)
+            logger.error(
+                "Could not find the following assignments: %s", missing_assignments
+            )
 
     assignment_id_to_section = {}
 

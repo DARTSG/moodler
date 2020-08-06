@@ -16,29 +16,36 @@ class InvalidAssignmentID(Exception):
 class Assignment(object):
     def __init__(self, assignment_json, submissions_json, grades_json):
         # a random number Moodle generates in API (not seen when you use Moodle visually)
-        self.uid = assignment_json['id']
+        self.uid = assignment_json["id"]
         # the actual ID that you see in the Moodle interface
-        self.cmid = assignment_json['cmid']
-        self.name = assignment_json['name']
-        self.description = assignment_json['intro']
-        self.attachments = [attachment['fileurl'] for attachment in assignment_json['introattachments']]
+        self.cmid = assignment_json["cmid"]
+        self.name = assignment_json["name"]
+        self.description = assignment_json["intro"]
+        self.attachments = [
+            attachment["fileurl"] for attachment in assignment_json["introattachments"]
+        ]
 
         self.submissions = []
         for submission in submissions_json:
             grade_json = None
-            user_id = submission['userid']
+            user_id = submission["userid"]
             for grade in grades_json:
-                if user_id == grade['userid']:
+                if user_id == grade["userid"]:
                     grade_json = grade
                     break
-            if 'new' != submission['status']:
+            if "new" != submission["status"]:
                 try:
                     self.submissions.append(Submission(user_id, grade_json, submission))
                 except MissingGrade:
-                    logger.warning("Missing grade for student \"{}\" in assignment \"{}\". Fix ASAP at {}".format(
-                        get_user_name(user_id),
-                        self.name,
-                        "{}//mod/assign/view.php?id={}&action=grader&userid={}".format(URL, self.cmid, user_id)))
+                    logger.warning(
+                        'Missing grade for student "{}" in assignment "{}". Fix ASAP at {}'.format(
+                            get_user_name(user_id),
+                            self.name,
+                            "{}//mod/assign/view.php?id={}&action=grader&userid={}".format(
+                                URL, self.cmid, user_id
+                            ),
+                        )
+                    )
                     self.submissions.append(Submission(user_id, None, submission))
 
         self._assignment_json = assignment_json
@@ -58,7 +65,9 @@ class Assignment(object):
         return submissions
 
     def __repr__(self):
-        return 'Assignment(id={}, name={}, submissions={})'.format(self.uid, self.name, len(self.submissions))
+        return "Assignment(id={}, name={}, submissions={})".format(
+            self.uid, self.name, len(self.submissions)
+        )
 
     def lock_submissions(self, course_id, students=None):
         """
@@ -70,9 +79,11 @@ class Assignment(object):
         else:
             mod_assign_lock_submissions(self.uid, students_ids)
 
-        logger.info("Locked submissions for assignment '%s' for %s",
-                    self.name,
-                    students if students is not None else "all students.")
+        logger.info(
+            "Locked submissions for assignment '%s' for %s",
+            self.name,
+            students if students is not None else "all students.",
+        )
 
     def unlock_submissions(self, course_id, students=None):
         """
@@ -84,39 +95,40 @@ class Assignment(object):
         else:
             mod_assign_unlock_submissions(self.uid, students_ids)
 
-        logger.info("Unlocked submissions for assignment '%s' for %s",
-                    self.name,
-                    students if students is not None else "all students.")
+        logger.info(
+            "Unlocked submissions for assignment '%s' for %s",
+            self.name,
+            students if students is not None else "all students.",
+        )
 
 
 def mod_assign_lock_submissions(assignment_id, user_ids):
     """
     Locks submissions for a specific assignments for a specific user(s).
     """
-    call_moodle_api('mod_assign_lock_submissions',
-                    assignmentid=assignment_id,
-                    userids=user_ids)
+    call_moodle_api(
+        "mod_assign_lock_submissions", assignmentid=assignment_id, userids=user_ids
+    )
 
 
 def mod_assign_unlock_submissions(assignment_id, user_ids):
     """
     Unlocks submissions for a specific assignments for a specific user(s).
     """
-    call_moodle_api('mod_assign_unlock_submissions',
-                    assignmentid=assignment_id,
-                    userids=user_ids)
+    call_moodle_api(
+        "mod_assign_unlock_submissions", assignmentid=assignment_id, userids=user_ids
+    )
 
 
 def mod_assign_get_grades(assignment_ids):
     """
     Returns the grades for all the assignments
     """
-    response = call_moodle_api('mod_assign_get_grades',
-                               assignmentids=assignment_ids)
+    response = call_moodle_api("mod_assign_get_grades", assignmentids=assignment_ids)
 
     grades = {}
-    for grds in response['assignments']:
-        grades[grds['assignmentid']] = grds['grades']
+    for grds in response["assignments"]:
+        grades[grds["assignmentid"]] = grds["grades"]
 
     return grades
 
@@ -126,8 +138,7 @@ def mod_assign_get_assignments(course_id):
     Returns a dictionary mapping assignment id to its name from a specified
     course
     """
-    response = call_moodle_api('mod_assign_get_assignments',
-                               courseids=[course_id])
+    response = call_moodle_api("mod_assign_get_assignments", courseids=[course_id])
 
     return response["courses"][0]["assignments"]
 
@@ -148,7 +159,7 @@ def get_assignments_by_field(course_id, field=None, assignments_fields=None):
     """
     assignments_not_found = []
     all_assignment_jsons = mod_assign_get_assignments(course_id)
-    assignment_ids = [assign['id'] for assign in all_assignment_jsons]
+    assignment_ids = [assign["id"] for assign in all_assignment_jsons]
 
     if not assignment_ids:
         logger.warning("No assignments were detected for course %s", course_id)
@@ -169,13 +180,19 @@ def get_assignments_by_field(course_id, field=None, assignments_fields=None):
 
             assignments_not_found.remove(assignment[field])
 
-        assignments.append(Assignment(assignment,
-                                      submissions.get(assignment['id'], []),
-                                      grades.get(assignment['id'], [])))
+        assignments.append(
+            Assignment(
+                assignment,
+                submissions.get(assignment["id"], []),
+                grades.get(assignment["id"], []),
+            )
+        )
 
     if assignments_not_found:
-        logger.error("Could not find the following exercises for the trainer: "
-                     "%s", assignments_not_found)
+        logger.error(
+            "Could not find the following exercises for the trainer: " "%s",
+            assignments_not_found,
+        )
 
     return assignments
 
@@ -189,9 +206,8 @@ def get_assignments(course_id, assignment_ids_to_get=None):
     :return: List of Assignment() objects
     """
     assignments = get_assignments_by_field(
-        course_id,
-        assignments_fields=assignment_ids_to_get,
-        field='cmid')
+        course_id, assignments_fields=assignment_ids_to_get, field="cmid"
+    )
 
     return assignments
 
@@ -205,9 +221,8 @@ def get_assignments_by_names(course_id, assignment_names_to_get=None):
     :return: List of Assignment() objects
     """
     assignments = get_assignments_by_field(
-        course_id,
-        assignments_fields=assignment_names_to_get,
-        field='name')
+        course_id, assignments_fields=assignment_names_to_get, field="name"
+    )
 
     return assignments
 

@@ -9,9 +9,9 @@ VERSION = "1.0.0"
 # prerequisite: setuptools
 # http://pypi.python.org/pypi/setuptools
 
-with open('requirements.txt') as f:
+with open("requirements.txt") as f:
     requirements = f.read().splitlines()
-    
+
 
 setup(
     name=NAME,
@@ -25,5 +25,5 @@ setup(
     include_package_data=True,
     long_description="""\
     Moodle API wrapper for instructors
-    """
+    """,
 )

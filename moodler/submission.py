@@ -9,25 +9,25 @@ class MissingGrade(Exception):
 
 class Grade(object):
     def __init__(self, grade_json):
-        self.timestamp = grade_json['timemodified']
+        self.timestamp = grade_json["timemodified"]
         try:
-            self.grade = float(grade_json['grade'])
+            self.grade = float(grade_json["grade"])
         except ValueError:
             raise MissingGrade()
         self._json_data = grade_json
 
     def __repr__(self):
-        return 'Grade(grade={}, timestamp={})'.format(self.grade, self.timestamp)
+        return "Grade(grade={}, timestamp={})".format(self.grade, self.timestamp)
 
 
 class SubmissionFile(object):
     def __init__(self, submission_file_json):
-        self.url = submission_file_json['fileurl']
-        self.timestamp = submission_file_json['timemodified']
+        self.url = submission_file_json["fileurl"]
+        self.timestamp = submission_file_json["timemodified"]
         self._json_data = submission_file_json
 
     def __repr__(self):
-        return 'SubmissionFile(url={}, timestamp={})'.format(self.url, self.timestamp)
+        return "SubmissionFile(url={}, timestamp={})".format(self.url, self.timestamp)
 
 
 class Submission(object):
@@ -39,15 +39,15 @@ class Submission(object):
         else:
             self.grade = None
 
-        self.gradingstatus = submission_json['gradingstatus']
+        self.gradingstatus = submission_json["gradingstatus"]
         self.submission_files = []
-        self.timestamp = submission_json['timemodified']
+        self.timestamp = submission_json["timemodified"]
 
-        for plugin in submission_json['plugins']:
-            if 'file' != plugin['type']:
+        for plugin in submission_json["plugins"]:
+            if "file" != plugin["type"]:
                 continue
-            for filearea in plugin['fileareas']:
-                for f in filearea['files']:
+            for filearea in plugin["fileareas"]:
+                for f in filearea["files"]:
                     self.submission_files.append(SubmissionFile(f))
 
         # Useful for debugging
@@ -63,14 +63,15 @@ class Submission(object):
         Returns True if the submission needs grading.
         Does this by checking the grading status and the grading timestamp vs the last modification timestamp
         """
-        return ('notgraded' == self.gradingstatus) or self.resubmitted
+        return ("notgraded" == self.gradingstatus) or self.resubmitted
 
     def __repr__(self):
-        return 'Submission(user_id={}, gradingstatus={}, grade={}, ' \
-               'submitted={})'.format(self.user_id,
-                                      self.gradingstatus,
-                                      self.grade,
-                                      len(self.submission_files))
+        return (
+            "Submission(user_id={}, gradingstatus={}, grade={}, "
+            "submitted={})".format(
+                self.user_id, self.gradingstatus, self.grade, len(self.submission_files)
+            )
+        )
 
 
 def mod_assign_get_submissions(assignment_ids):
@@ -79,12 +80,13 @@ def mod_assign_get_submissions(assignment_ids):
     mapping assignment id to submissions
     {id: [..]}
     """
-    response = call_moodle_api('mod_assign_get_submissions',
-                               assignmentids=assignment_ids)
+    response = call_moodle_api(
+        "mod_assign_get_submissions", assignmentids=assignment_ids
+    )
 
     submissions = {}
-    for assign in response['assignments']:
-        submissions[assign['assignmentid']] = assign['submissions']
+    for assign in response["assignments"]:
+        submissions[assign["assignmentid"]] = assign["submissions"]
 
     return submissions
 
@@ -95,8 +97,8 @@ def mod_assign_get_submission_status(assignment_id, user_id=None):
     mapping assignment id to submissions
     {id: [..]}
     """
-    response = call_moodle_api('mod_assign_get_submission_status',
-                               assignid=assignment_id,
-                               userid=user_id)
+    response = call_moodle_api(
+        "mod_assign_get_submission_status", assignid=assignment_id, userid=user_id
+    )
 
     return response

@@ -34,41 +34,56 @@ logger = logging.getLogger(__name__)
 
 
 def setup_logging():
-    logging.basicConfig(format='%(levelname)s - %(message)s', level=logging.INFO)
+    logging.basicConfig(format="%(levelname)s - %(message)s", level=logging.INFO)
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.set_defaults(which='none')
+    parser.set_defaults(which="none")
     subparsers = parser.add_subparsers()
 
-    parser_ungraded = subparsers.add_parser('ungraded',
-                                            help='Prints the amount of ungraded submissions')
-    parser_ungraded.add_argument('course_id', type=int, help='The course id to query')
-    parser_ungraded.add_argument('--verbose', '-v', action='store_true',
-                                 help='Prints the names of the ungraded exercises')
-    parser_ungraded.add_argument('--download-folder', '-d',
-                                 help='If specified, the ungraded exercises will be written there')
-    parser_ungraded.set_defaults(which='ungraded')
+    parser_ungraded = subparsers.add_parser(
+        "ungraded", help="Prints the amount of ungraded submissions"
+    )
+    parser_ungraded.add_argument("course_id", type=int, help="The course id to query")
+    parser_ungraded.add_argument(
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Prints the names of the ungraded exercises",
+    )
+    parser_ungraded.add_argument(
+        "--download-folder",
+        "-d",
+        help="If specified, the ungraded exercises will be written there",
+    )
+    parser_ungraded.set_defaults(which="ungraded")
 
-    parser_feedbacks = subparsers.add_parser('feedbacks',
-                                             help='Exports the feedbacks for a course')
-    parser_feedbacks.add_argument('course_id', type=int, help='The course id to query')
-    parser_feedbacks.add_argument('download_folder', type=str,
-                                  help='The folder to export to')
-    parser_feedbacks.set_defaults(which='feedbacks')
+    parser_feedbacks = subparsers.add_parser(
+        "feedbacks", help="Exports the feedbacks for a course"
+    )
+    parser_feedbacks.add_argument("course_id", type=int, help="The course id to query")
+    parser_feedbacks.add_argument(
+        "download_folder", type=str, help="The folder to export to"
+    )
+    parser_feedbacks.set_defaults(which="feedbacks")
 
-    parser_export = subparsers.add_parser('export',
-                                             help='Exports submissions, materials, and grades for a course')
-    parser_export.add_argument('course_id', type=int, help='The course id to query')
-    parser_export.add_argument('download_folder', type=str,
-                                  help='The folder to export to')
-    parser_export.set_defaults(which='export')
+    parser_export = subparsers.add_parser(
+        "export", help="Exports submissions, materials, and grades for a course"
+    )
+    parser_export.add_argument("course_id", type=int, help="The course id to query")
+    parser_export.add_argument(
+        "download_folder", type=str, help="The folder to export to"
+    )
+    parser_export.set_defaults(which="export")
 
-    parser_list_students = subparsers.add_parser('list_students',
-                                                 help='List names of all students')
-    parser_list_students.add_argument('course_id', type=int, help='The course id to query')
-    parser_list_students.set_defaults(which='list_students')
+    parser_list_students = subparsers.add_parser(
+        "list_students", help="List names of all students"
+    )
+    parser_list_students.add_argument(
+        "course_id", type=int, help="The course id to query"
+    )
+    parser_list_students.set_defaults(which="list_students")
 
     args = parser.parse_args()
     return args, parser
@@ -79,20 +94,22 @@ def main():
 
     args, parser = parse_args()
 
-    if 'none' == args.which:
+    if "none" == args.which:
         parser.print_help()
-    elif 'ungraded' == args.which:
-        submissions_status = submissions_statistics(args.course_id,
-                                                    is_verbose=args.verbose,
-                                                    download_folder=args.download_folder)
-        print("Total ungraded: {}".format(submissions_status['total_ungraded']))
-    elif args.which == 'list_students':
+    elif "ungraded" == args.which:
+        submissions_status = submissions_statistics(
+            args.course_id,
+            is_verbose=args.verbose,
+            download_folder=args.download_folder,
+        )
+        print("Total ungraded: {}".format(submissions_status["total_ungraded"]))
+    elif args.which == "list_students":
         pprint(get_students(args.course_id))
-    elif 'feedbacks' == args.which:
+    elif "feedbacks" == args.which:
         export_feedbacks(args.course_id, args.download_folder)
-    elif 'export' == args.which:
+    elif "export" == args.which:
         export_all(args.course_id, args.download_folder)
 
 
-if '__main__' == __name__:
+if "__main__" == __name__:
     main()

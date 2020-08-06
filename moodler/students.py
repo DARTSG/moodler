@@ -15,8 +15,7 @@ def core_enrol_get_enrolled_users(course_id):
     """
     Get enrolled users by course id
     """
-    response = call_moodle_api('core_enrol_get_enrolled_users',
-                               courseid=course_id)
+    response = call_moodle_api("core_enrol_get_enrolled_users", courseid=course_id)
 
     return response
 
@@ -34,22 +33,24 @@ def get_students_ids_by_name(course_id, students_names: list):
 
     for student_name in students_names:
         for enrolled in core_enrol_get_enrolled_users(course_id):
-            if enrolled['roles'][0]['shortname'] != 'student':
+            if enrolled["roles"][0]["shortname"] != "student":
                 continue
 
             # Trying to locate a student that has a similar name to one of
             # the names received in the input list.
-            if student_name.lower() not in enrolled['fullname'].lower():
+            if student_name.lower() not in enrolled["fullname"].lower():
                 continue
 
             # At this point, we have found a student in the course that has a
             # similar name to one of the names in the input list students_names
-            logger.info("Found student '%s' for the received name '%s'",
-                        enrolled['fullname'],
-                        student_name)
+            logger.info(
+                "Found student '%s' for the received name '%s'",
+                enrolled["fullname"],
+                student_name,
+            )
 
             if student_name not in students_names_to_ids_dict:
-                students_names_to_ids_dict[student_name] = enrolled['id']
+                students_names_to_ids_dict[student_name] = enrolled["id"]
 
             # If we have already found this student in the course, that means
             # that the specified name in the list is not specific enough and
@@ -69,10 +70,10 @@ def get_students(course_id):
     output_enrolled_students = {}
 
     for enrolled in core_enrol_get_enrolled_users(course_id):
-        if enrolled['roles'][0]['shortname'] != 'student':
+        if enrolled["roles"][0]["shortname"] != "student":
             continue
 
-        output_enrolled_students[enrolled['id']] = enrolled['fullname']
+        output_enrolled_students[enrolled["id"]] = enrolled["fullname"]
 
     return output_enrolled_students
 
@@ -86,23 +87,24 @@ def list_students():
     # TODO: This is not clear how to change this to call the call_moodle_api
     #  utility function.
     response = requests.get(
-        REQUEST_FORMAT.format('core_user_get_users') +
-        '&criteria[0][key]=email&criteria[0][value]=%%')
+        REQUEST_FORMAT.format("core_user_get_users")
+        + "&criteria[0][key]=email&criteria[0][value]=%%"
+    )
 
-    validate_response('core_user_get_users', response.json())
+    validate_response("core_user_get_users", response.json())
 
     # Create users map
     users_map = {}
-    for user in response.json()['users']:
-        users_map[user['id']] = user['firstname'] + ' ' + user['lastname']
+    for user in response.json()["users"]:
+        users_map[user["id"]] = user["firstname"] + " " + user["lastname"]
     return users_map
 
 
 def get_user_name(user_id):
-    response = call_moodle_api('core_user_get_users_by_field',
-                               field='id',
-                               values=[user_id])
+    response = call_moodle_api(
+        "core_user_get_users_by_field", field="id", values=[user_id]
+    )
 
     response_json = response[0]
 
-    return response_json['firstname'] + ' ' + response_json['lastname']
+    return response_json["firstname"] + " " + response_json["lastname"]

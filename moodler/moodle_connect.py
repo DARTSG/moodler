@@ -18,7 +18,7 @@ from moodler.config import URL, LOGIN_PAGE
 logger = logging.getLogger(__name__)
 
 LOGIN_TOKEN_PATTERN = r'name="logintoken" value="([\w\d]+)"'
-FAILED_LOGIN_PATTERN = r'Invalid login'
+FAILED_LOGIN_PATTERN = r"Invalid login"
 
 
 class MoodleLoginException(Exception):
@@ -47,42 +47,46 @@ def connect_to_server(username, password):
 
     # Using this get request in order to retrieve the login token for the
     # login request.
-    login_page_response = session.get('{}/{}'.format(URL, LOGIN_PAGE))
+    login_page_response = session.get("{}/{}".format(URL, LOGIN_PAGE))
 
     # Looking for the login token within the login page using regex.
-    login_token_match = re.search(LOGIN_TOKEN_PATTERN,
-                                  login_page_response.content.decode())
+    login_token_match = re.search(
+        LOGIN_TOKEN_PATTERN, login_page_response.content.decode()
+    )
     if login_token_match is None:
-        raise LoginTokenNotFound("The login token required for authentication "
-                                 "with the Moodler server was not found. "
-                                 "Please try again. If still there is no "
-                                 "success, you should debug the webpage and "
-                                 "locate the logintoken, since perhaps the "
-                                 "regex pattern is no longer up-to-date")
+        raise LoginTokenNotFound(
+            "The login token required for authentication "
+            "with the Moodler server was not found. "
+            "Please try again. If still there is no "
+            "success, you should debug the webpage and "
+            "locate the logintoken, since perhaps the "
+            "regex pattern is no longer up-to-date"
+        )
 
     login_token = login_token_match.group(1)
 
     # Using the login token we have found within the login page to create the
     # parameters for the real login.
     params = {
-        'anchor': '',
-        'logintoken': login_token,
-        'username': username,
-        'password': password
+        "anchor": "",
+        "logintoken": login_token,
+        "username": username,
+        "password": password,
     }
 
     # Sending the login request.
-    login_post_response = session.post('{}/{}'.format(URL, LOGIN_PAGE),
-                                       data=params)
+    login_post_response = session.post("{}/{}".format(URL, LOGIN_PAGE), data=params)
 
     # Check if the login has failed due to invalid credentials
-    failed_login_match = re.search(FAILED_LOGIN_PATTERN,
-                                   login_post_response.content.decode())
+    failed_login_match = re.search(
+        FAILED_LOGIN_PATTERN, login_post_response.content.decode()
+    )
     # If the search has succeeded and in the response we have found an
     # indicator for failed login, then we should raise an exception.
     if failed_login_match is not None:
-        raise InvalidUsernameOrPassword("The username / password you have "
-                                        "used are invalid")
+        raise InvalidUsernameOrPassword(
+            "The username / password you have " "used are invalid"
+        )
 
     logger.info("Successfully created a new session with the Moodle server")
 

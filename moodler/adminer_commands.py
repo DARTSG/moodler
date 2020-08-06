@@ -7,7 +7,7 @@ import re
 from moodler.config import URL
 
 
-DB_UPDATE_SQL_COMMAND = r'''
+DB_UPDATE_SQL_COMMAND = r"""
 DELIMITER //
 
 DROP PROCEDURE IF EXISTS Update_feedback;
@@ -58,13 +58,15 @@ END; //
 DELIMITER ;
 
 call Update_feedback()
-'''
+"""
 
-TOKEN_PATTERN = r'form action=[\'"]{2} method=[\'"]{1}post[\'"]{1}.*name=[' \
-                r'\'"]{1}token[\'"]{1} value=[\'"]{1}([\d:]+)[\'"]{1}'
-RESPONSE_RESULT_PATTERN = r'Query executed OK, (\d+) rows affected.'
-DB_NAME = 'bitnami_moodle'
-ADMINER_PAGE = '/local/adminer/lib/run_adminer.php'
+TOKEN_PATTERN = (
+    r'form action=[\'"]{2} method=[\'"]{1}post[\'"]{1}.*name=['
+    r'\'"]{1}token[\'"]{1} value=[\'"]{1}([\d:]+)[\'"]{1}'
+)
+RESPONSE_RESULT_PATTERN = r"Query executed OK, (\d+) rows affected."
+DB_NAME = "bitnami_moodle"
+ADMINER_PAGE = "/local/adminer/lib/run_adminer.php"
 
 
 class AdminerException(Exception):
@@ -90,23 +92,19 @@ def get_sql_command_token(session):
     Moodle server.
     :return: The value of the token for the SQL command.
     """
-    params = {
-        'server': '',
-        'username': '',
-        'db': DB_NAME,
-        'sql': ''
-    }
-    response = session.get(URL + ADMINER_PAGE,
-                           params=params)
+    params = {"server": "", "username": "", "db": DB_NAME, "sql": ""}
+    response = session.get(URL + ADMINER_PAGE, params=params)
 
     token_match = re.search(TOKEN_PATTERN, response.content.decode(), re.DOTALL)
 
     if token_match is None:
-        raise SQLTokenNotFound("The SQL command requires a token to be "
-                               "received from the server, but in this case "
-                               "the token was not found. It could be that the "
-                               "server has changed the implementation and the "
-                               "token can only be found elsewhere")
+        raise SQLTokenNotFound(
+            "The SQL command requires a token to be "
+            "received from the server, but in this case "
+            "the token was not found. It could be that the "
+            "server has changed the implementation and the "
+            "token can only be found elsewhere"
+        )
 
     return token_match.group(1)
 
@@ -122,29 +120,27 @@ def run_sql_command_using_token(session, token_value, sql_command):
     Moodle.
     :return:
     """
-    params = {
-        'server': '',
-        'username': '',
-        'db': DB_NAME,
-        'sql': ''
-    }
+    params = {"server": "", "username": "", "db": DB_NAME, "sql": ""}
     files = {
-        'query': (None, sql_command),
-        'limit': (None, ''),
-        'token': (None, token_value)
+        "query": (None, sql_command),
+        "limit": (None, ""),
+        "token": (None, token_value),
     }
-    response = session.post(URL + '/local/adminer/lib/run_adminer.php',
-                            params=params,
-                            files=files)
+    response = session.post(
+        URL + "/local/adminer/lib/run_adminer.php", params=params, files=files
+    )
 
-    rows_affected_counts = re.findall(RESPONSE_RESULT_PATTERN,
-                                      response.content.decode())
+    rows_affected_counts = re.findall(
+        RESPONSE_RESULT_PATTERN, response.content.decode()
+    )
 
     # Making sure there is at least one row affected by the query
     if not any(map(int, rows_affected_counts)):
-        raise SQLNoRowBeenAffected("The response for the SQL command has "
-                                   "returned that the command did not affect "
-                                   "any value in the DB")
+        raise SQLNoRowBeenAffected(
+            "The response for the SQL command has "
+            "returned that the command did not affect "
+            "any value in the DB"
+        )
 
 
 def run_reports_db_sql_command(session, sql_command):
@@ -168,5 +164,3 @@ def update_reports_db(session):
     :return:
     """
     run_reports_db_sql_command(session, DB_UPDATE_SQL_COMMAND)
-
-
