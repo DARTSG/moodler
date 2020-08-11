@@ -2,8 +2,12 @@
 This file should contain general logic for every Moodle API call.
 """
 import requests
+import logging
 
 from moodler.consts import REQUEST_FORMAT
+
+
+logger = logging.getLogger(__name__)
 
 
 class MoodlerException(Exception):
@@ -28,14 +32,18 @@ def validate_response(function_name, response):
                 "message: {}".format(function_name, response["message"])
             )
 
-        if response.get("warnings", []):
+        warnings = response.get("warnings", [])
+        if warnings:
             # Warning example:
             # User is not enrolled or does not have requested capability
+            # Warnings can also be a list of dicts if the api call returns
+            # multiple objects.
+            # Some warnings are useless, some are critical.
 
-            raise MoodleAPIException(
-                "Moodle API call for function '%s' returned the following warning: %s",
+            logger.debug(
+                "API function '%s' returned the following warning: %s",
                 function_name,
-                "".join(response.warnings),
+                str(warnings),
             )
 
 
