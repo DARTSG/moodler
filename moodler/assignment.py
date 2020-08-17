@@ -9,7 +9,15 @@ from moodler.submission import Submission, mod_assign_get_submissions, MissingGr
 logger = logging.getLogger(__name__)
 
 
-class InvalidAssignmentID(Exception):
+class AssignmentException(Exception):
+    pass
+
+
+class InvalidAssignmentID(AssignmentException):
+    pass
+
+
+class EmptyCourseError(AssignmentException):
     pass
 
 
@@ -139,6 +147,11 @@ def mod_assign_get_assignments(course_id):
     course
     """
     response = call_moodle_api("mod_assign_get_assignments", courseids=[course_id])
+
+    if not response["courses"]:
+        raise EmptyCourseError(
+            "Received an empty course. It could be that the course does not have any assignments."
+        )
 
     return response["courses"][0]["assignments"]
 
