@@ -76,8 +76,8 @@ def list_courses(course_prefix=None):
     for course in courses_from_moodle:
         if (
             course_prefix is None
-            or course["shortname"].starts_with(course_prefix)
-            or course["fullname"].starts_with(course_prefix)
+            or course["shortname"].startswith(course_prefix)
+            or course["fullname"].startswith(course_prefix)
         ):
             courses_list.append(
                 Course(course["id"], course["shortname"], course["fullname"])
