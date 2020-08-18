@@ -83,7 +83,7 @@ class Assignment(object):
         Locking submissions for this specific assignment.
         """
         if students_names is None:
-            students_ids = list(get_students(course_id, students_names).keys())
+            students_ids = list(get_students(course_id).keys())
         else:
             students_ids = get_students_ids_by_name(course_id, students_names)
 
@@ -103,7 +103,7 @@ class Assignment(object):
         Locking submissions for this specific assignment.
         """
         if students_names is None:
-            students_ids = list(get_students(course_id, students_names).keys())
+            students_ids = list(get_students(course_id).keys())
         else:
             students_ids = get_students_ids_by_name(course_id, students_names)
 
