@@ -2,6 +2,7 @@ import logging
 from collections import defaultdict
 from parse import parse
 
+from moodler.moodle_exception import MoodlerException
 from moodler.assignment import get_assignments
 from moodler.moodle_api import call_moodle_api
 
@@ -9,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 # Exceptions for the current module ###
-class SectionsException(Exception):
+class SectionsException(MoodlerException):
     pass
 
 

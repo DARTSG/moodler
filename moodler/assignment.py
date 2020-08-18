@@ -2,6 +2,7 @@ import logging
 import requests
 
 from moodler.config import URL
+from moodler.moodle_exception import MoodlerException
 from moodler.moodle_api import call_moodle_api
 from moodler.students import get_user_name, get_students_ids_by_name
 from moodler.submission import Submission, mod_assign_get_submissions, MissingGrade
@@ -9,7 +10,7 @@ from moodler.submission import Submission, mod_assign_get_submissions, MissingGr
 logger = logging.getLogger(__name__)
 
 
-class AssignmentException(Exception):
+class AssignmentException(MoodlerException):
     pass
 
 
