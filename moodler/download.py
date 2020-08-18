@@ -2,6 +2,7 @@ import re
 from pathlib import Path
 import urllib.request
 
+from moodler.moodle_exception import MoodlerException
 from moodler.config import TOKEN, URL
 
 
@@ -25,7 +26,7 @@ REPORT_DIGITS_AFTER_DECIMAL_POINT = 2
 REPORT_FILE_NAME_FORMAT = "{} Report" + COURSE_REPORT_EXT
 
 
-class DownloadException(Exception):
+class DownloadException(MoodlerException):
     pass
 
 

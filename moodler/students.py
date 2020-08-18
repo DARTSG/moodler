@@ -1,13 +1,14 @@
 import requests
 import logging
 
+from moodler.moodle_exception import MoodlerException
 from moodler.consts import REQUEST_FORMAT
 from moodler.moodle_api import call_moodle_api, validate_response
 
 logger = logging.getLogger(__name__)
 
 
-class TwoStudentsFoundConflict(Exception):
+class TwoStudentsFoundConflict(MoodlerException):
     pass
 
 

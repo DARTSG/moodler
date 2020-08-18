@@ -2,6 +2,7 @@ import logging
 from collections import defaultdict
 from parse import parse
 
+from moodler.moodle_exception import MoodlerException
 from moodler.assignment import get_assignments
 from moodler.moodle_api import call_moodle_api
 
@@ -9,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 # Exceptions for the current module ###
-class SectionsException(Exception):
+class SectionsException(MoodlerException):
     pass
 
 
@@ -76,8 +77,8 @@ def list_courses(course_prefix=None):
     for course in courses_from_moodle:
         if (
             course_prefix is None
-            or course["shortname"].starts_with(course_prefix)
-            or course["fullname"].starts_with(course_prefix)
+            or course["shortname"].startswith(course_prefix)
+            or course["fullname"].startswith(course_prefix)
         ):
             courses_list.append(
                 Course(course["id"], course["shortname"], course["fullname"])

@@ -4,14 +4,11 @@ This file should contain general logic for every Moodle API call.
 import requests
 import logging
 
+from moodler.moodle_exception import MoodlerException
 from moodler.consts import REQUEST_FORMAT
 
 
 logger = logging.getLogger(__name__)
-
-
-class MoodlerException(Exception):
-    pass
 
 
 class MoodleAPIException(MoodlerException):

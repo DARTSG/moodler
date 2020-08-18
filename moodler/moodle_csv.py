@@ -3,6 +3,7 @@ import sys
 import os
 import csv
 
+from moodler.moodle_exception import MoodlerException
 from moodler.config import STUDENTS_TO_IGNORE
 
 logger = logging.getLogger(__name__)
@@ -34,7 +35,7 @@ STUDENT_INDEX = 1
 STATUS_INDEX = 3
 
 
-class InvalidCsv(Exception):
+class InvalidCsv(MoodlerException):
     def __init__(self, csv_path):
         super().__init__("CSV that shouldn't be processed found at '%s'" % csv_path)
 

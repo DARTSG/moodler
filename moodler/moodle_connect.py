@@ -13,6 +13,7 @@ import re
 import logging
 import requests
 
+from moodler.moodle_exception import MoodlerException
 from moodler.config import URL, LOGIN_PAGE
 
 logger = logging.getLogger(__name__)
@@ -21,7 +22,7 @@ LOGIN_TOKEN_PATTERN = r'name="logintoken" value="([\w\d]+)"'
 FAILED_LOGIN_PATTERN = r"Invalid login"
 
 
-class MoodleLoginException(Exception):
+class MoodleLoginException(MoodlerException):
     pass
 
 

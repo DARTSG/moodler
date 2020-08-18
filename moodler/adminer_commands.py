@@ -4,6 +4,7 @@ interface in the Moodle UI.
 """
 import re
 
+from moodler.moodle_exception import MoodlerException
 from moodler.config import URL
 
 
@@ -69,7 +70,7 @@ DB_NAME = "bitnami_moodle"
 ADMINER_PAGE = "/local/adminer/lib/run_adminer.php"
 
 
-class AdminerException(Exception):
+class AdminerException(MoodlerException):
     pass
 
 
