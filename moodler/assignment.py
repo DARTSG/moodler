@@ -4,7 +4,7 @@ import requests
 from moodler.config import URL
 from moodler.moodle_exception import MoodlerException
 from moodler.moodle_api import call_moodle_api
-from moodler.students import get_user_name, get_students_ids_by_name
+from moodler.students import get_user_name, get_students_ids_by_name, get_students
 from moodler.submission import Submission, mod_assign_get_submissions, MissingGrade
 
 logger = logging.getLogger(__name__)
@@ -78,12 +78,16 @@ class Assignment(object):
             self.uid, self.name, len(self.submissions)
         )
 
-    def lock_submissions(self, course_id, students=None):
+    def lock_submissions(self, course_id, students_names=None):
         """
         Locking submissions for this specific assignment.
         """
-        students_ids = get_students_ids_by_name(course_id, students)
-        if not students_ids and students is not None:
+        if students_names is None:
+            students_ids = list(get_students(course_id, students_names).keys())
+        else:
+            students_ids = get_students_ids_by_name(course_id, students_names)
+
+        if not students_ids:
             logger.info("No student was found! Aborting...")
         else:
             mod_assign_lock_submissions(self.uid, students_ids)
@@ -91,15 +95,19 @@ class Assignment(object):
         logger.info(
             "Locked submissions for assignment '%s' for %s",
             self.name,
-            students if students is not None else "all students.",
+            students_names if students_names is not None else "all students.",
         )
 
-    def unlock_submissions(self, course_id, students=None):
+    def unlock_submissions(self, course_id, students_names=None):
         """
         Locking submissions for this specific assignment.
         """
-        students_ids = get_students_ids_by_name(course_id, students)
-        if not students_ids and students is not None:
+        if students_names is None:
+            students_ids = list(get_students(course_id, students_names).keys())
+        else:
+            students_ids = get_students_ids_by_name(course_id, students_names)
+
+        if not students_ids:
             logger.info("No student was found! Aborting...")
         else:
             mod_assign_unlock_submissions(self.uid, students_ids)
@@ -107,7 +115,7 @@ class Assignment(object):
         logger.info(
             "Unlocked submissions for assignment '%s' for %s",
             self.name,
-            students if students is not None else "all students.",
+            students_names if students_names is not None else "all students.",
         )
 
 
