@@ -40,7 +40,7 @@ def collect_csvs(folder_path):
     for root, dirs, files in os.walk(folder_path):
         for _file in files:
             file_path = os.path.join(root, _file)
-            if file_path.endswith(".csv") and should_modify(file_path):
+            if file_path.endswith(".csv") and are_headers_valid(file_path):
                 target_csvs.append(file_path)
 
     return target_csvs
