@@ -58,7 +58,13 @@ def get_students_ids_by_name(course_id, students_names: list):
             # fits more than one names in the course.
             # We do not want duplications!
             else:
-                logger.error("Already found student - skipping this name")
+                logger.error(
+                    """
+                    Found more than one student containing this name.
+                    You should be more indicative with the name you specify.
+                    For example, if you specify 'Tan', it is not indicative enough to understand who you are talking about since it is a very common surname!
+                    """
+                )
                 del students_names_to_ids_dict[student_name]
 
     return list(students_names_to_ids_dict.values())
