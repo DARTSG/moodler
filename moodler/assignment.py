@@ -88,15 +88,15 @@ class Assignment(object):
             students_ids = get_students_ids_by_name(course_id, students_names)
 
         if not students_ids:
-            logger.info("No student was found! Aborting...")
+            logger.warning("No student was found! Aborting...")
         else:
             mod_assign_lock_submissions(self.uid, students_ids)
 
-        logger.info(
-            "Locked submissions for assignment '%s' for %s",
-            self.name,
-            students_names if students_names is not None else "all students.",
-        )
+            logger.info(
+                "Locked submissions for assignment '%s' for %s",
+                self.name,
+                students_names if students_names is not None else "all students.",
+            )
 
     def unlock_submissions(self, course_id, students_names=None):
         """
@@ -108,15 +108,15 @@ class Assignment(object):
             students_ids = get_students_ids_by_name(course_id, students_names)
 
         if not students_ids:
-            logger.info("No student was found! Aborting...")
+            logger.warning("No student was found! Aborting...")
         else:
             mod_assign_unlock_submissions(self.uid, students_ids)
 
-        logger.info(
-            "Unlocked submissions for assignment '%s' for %s",
-            self.name,
-            students_names if students_names is not None else "all students.",
-        )
+            logger.info(
+                "Unlocked submissions for assignment '%s' for %s",
+                self.name,
+                students_names if students_names is not None else "all students.",
+            )
 
 
 def mod_assign_lock_submissions(assignment_id, user_ids):
