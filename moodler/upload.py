@@ -3,35 +3,19 @@ import logging
 import os
 import requests
 
+from enum import Enum
+
 from typing import Tuple
 from moodler.assignment import Assignment
 
 from moodler.moodle_exception import MoodlerException
-from moodler.config import TOKEN, URL
+from moodler.config import URL
 
 logger = logging.getLogger(__name__)
 
-GRADING_WORKSHEET_UPLOAD_CONTEXTID_PATTERN = (
-    r'<input name="contextid" type="hidden" ' r'value="(\d+)"'
-)
 
-GRADING_WORKSHEET_UPLOAD_SESSKEY_PATTERN = (
-    r'<input name="sesskey" type="hidden" ' r'value="([\w\d]+)"'
-)
-
-GRADING_WORKSHEET_UPLOAD_GRADESFILE_PATTERN = (
-    r'<input type="hidden" name="gradesfile" id="id_gradesfile" ' r'value="(\d+)"'
-)
-
-GRADING_WORKSHEET_UPLOAD_IMPORTID_PATTERN = (
-    r'<input name="importid" type="hidden" ' r'value="(\d+)"'
-)
-
-GRADING_WORKSHEET_UPLOAD_DRAFTID_PATTERN = (
-    r'<input name="draftid" type="hidden" ' r'value="(\d+)"'
-)
-
-SUCCESS_GRADING_WORKSHEET_UPLOAD_PATTERN = r"Updated (\d+) grades and feedback"
+class ContentType(Enum):
+    Excel = "application/vnd.ms-excel"
 
 
 class UploadException(MoodlerException):
@@ -53,16 +37,20 @@ class InvalidUploadGradingConfirmationPage(UploadException):
 def get_params_from_grading_page(
     assignment_id: str, session: requests.Session
 ) -> Tuple[str, str]:
+    """
+    Getting contextid and sesskey parameters needed for the upload worksheet requests
+    :return: A tuple of contextid and sesskey parameters.
+    """
     # Build the get request to the grading page.
     params = {"id": assignment_id, "action": "grading"}
     response = session.get(URL + "/mod/assign/view.php", params=params)
 
-    grading_page_content = response.content.decode()
+    grading_page_content = response.text
     contextid_match = re.search(
-        GRADING_WORKSHEET_UPLOAD_CONTEXTID_PATTERN, grading_page_content
+        r'<input name="contextid" type="hidden" value="(\d+)"', grading_page_content
     )
     sesskey_match = re.search(
-        GRADING_WORKSHEET_UPLOAD_SESSKEY_PATTERN, grading_page_content
+        r'<input name="sesskey" type="hidden" value="([\w\d]+)"', grading_page_content
     )
 
     if contextid_match is None:
@@ -91,9 +79,9 @@ def get_params_from_upload_grading_worksheet_page(
     }
     response = session.get(URL + "/mod/assign/view.php", params=params)
 
-    upload_grading_worksheet_page_content = response.content.decode()
+    upload_grading_worksheet_page_content = response.text
     gradesfile_match = re.search(
-        GRADING_WORKSHEET_UPLOAD_GRADESFILE_PATTERN,
+        r'<input type="hidden" name="gradesfile" id="id_gradesfile" value="(\d+)"',
         upload_grading_worksheet_page_content,
     )
 
@@ -107,7 +95,7 @@ def get_params_from_upload_grading_worksheet_page(
 
 def upload_file_to_moodle(
     file_path: str,
-    content_type: str,
+    content_type: ContentType,
     contextid: str,
     sesskey: str,
     gradesfile: str,
@@ -119,7 +107,7 @@ def upload_file_to_moodle(
         file_content = f.read()
 
     multipart_params = {
-        "repo_upload_file": (file_name, file_content, content_type),
+        "repo_upload_file": (file_name, file_content, content_type.value),
         "sesskey": (None, sesskey),
         "repo_id": (None, "4"),
         "itemid": (None, gradesfile),
@@ -137,6 +125,10 @@ def upload_file_to_moodle(
 def get_params_from_submitting_uploaded_grading_worksheet(
     assignment_id: str, sesskey: str, gradesfile: str, session: requests.Session
 ) -> Tuple[str, str]:
+    """
+    Getting importid and draftid parameters needed for the upload worksheet requests
+    :return: A tuple of importid and draftid parameters.
+    """
     # Build the post request to submit the uploaded the grading worksheet.
     data = {
         "id": assignment_id,
@@ -154,12 +146,12 @@ def get_params_from_submitting_uploaded_grading_worksheet(
     }
     response = session.post(URL + "/mod/assign/view.php", data=data)
 
-    confirmation_page_content = response.content.decode()
+    confirmation_page_content = response.text
     importid_match = re.search(
-        GRADING_WORKSHEET_UPLOAD_IMPORTID_PATTERN, confirmation_page_content
+        r'<input name="importid" type="hidden" value="(\d+)"', confirmation_page_content
     )
     draftid_match = re.search(
-        GRADING_WORKSHEET_UPLOAD_DRAFTID_PATTERN, confirmation_page_content
+        r'<input name="draftid" type="hidden" value="(\d+)"', confirmation_page_content
     )
 
     if importid_match is None:
@@ -206,10 +198,8 @@ def confirm_grading_with_uploaded_worksheet(
         "submitbutton": "Confirm",
     }
     response = session.post(URL + "/mod/assign/view.php", data=data)
-    result_page_content = response.content.decode()
-    success_match = re.search(
-        SUCCESS_GRADING_WORKSHEET_UPLOAD_PATTERN, result_page_content
-    )
+    result_page_content = response.text
+    success_match = re.search(r"Updated (\d+) grades and feedback", result_page_content)
     if success_match is None:
         raise UploadException(
             "Failed to upload grading worksheet for assignment {} (ID: {})".format(
@@ -231,7 +221,7 @@ def upload_grading_worksheet(
     gradesfile = get_params_from_upload_grading_worksheet_page(assignment_id, session)
     upload_file_to_moodle(
         grading_worksheet_csv_path,
-        "application/vnd.ms-excel",
+        ContentType.Excel,
         contextid,
         sesskey,
         gradesfile,
