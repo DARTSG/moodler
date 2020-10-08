@@ -271,9 +271,7 @@ def status_report(course_id):
     student_statuses = []
     for user, submission_count in submissions_by_user.items():
         student_statuses.append(
-            StudentStatus(
-                user, submission_count, last_submission_by_user[user].user_name
-            )
+            StudentStatus(user, submission_count, last_submission_by_user[user].name)
         )
 
     student_statuses = sorted(
