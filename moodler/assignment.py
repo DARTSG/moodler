@@ -61,10 +61,6 @@ class Assignment(object):
         self._submissions_json = submissions_json
         self._grades_json = grades_json
 
-        # Dynamic parameter used to keep track of how many ungraded submissions are in a given assignment. This may
-        # change every execution.
-        self.num_of_ungraded = 0
-
     def ungraded(self):
         submissions = []
         for submission in self.submissions:
@@ -123,18 +119,14 @@ def mod_assign_lock_submissions(assignment_id, user_ids):
     """
     Locks submissions for a specific assignments for a specific user(s).
     """
-    call_moodle_api(
-        "mod_assign_lock_submissions", assignmentid=assignment_id, userids=user_ids
-    )
+    call_moodle_api("mod_assign_lock_submissions", assignmentid=assignment_id, userids=user_ids)
 
 
 def mod_assign_unlock_submissions(assignment_id, user_ids):
     """
     Unlocks submissions for a specific assignments for a specific user(s).
     """
-    call_moodle_api(
-        "mod_assign_unlock_submissions", assignmentid=assignment_id, userids=user_ids
-    )
+    call_moodle_api("mod_assign_unlock_submissions", assignmentid=assignment_id, userids=user_ids)
 
 
 def mod_assign_get_grades(assignment_ids):
