@@ -1,6 +1,8 @@
 import logging
+from typing import NamedTuple
 from pathlib import Path
 import csv
+from collections import Counter, defaultdict
 
 from moodler.assignment import get_assignments
 from moodler.config import STUDENTS_TO_IGNORE, MOODLE_USERNAME, MOODLE_PASSWORD
@@ -16,6 +18,26 @@ from moodler.students import get_students
 from moodler.sections import core_course_get_contents, locate_course_name
 
 logger = logging.getLogger(__name__)
+
+
+class StudentStatus(NamedTuple):
+    """
+    Consise submission status for one user.
+    """
+
+    user_name: str
+    total_submissions: int
+    last_submission: str
+
+
+class SubmissionTuple(NamedTuple):
+    """
+    A helper named tuple for the status report function.
+    Maps a submission name to a timestamp
+    """
+
+    name: str
+    timestamp: int
 
 
 def submissions_statistics(course_id, is_verbose=False, download_folder=None):
@@ -92,7 +114,7 @@ def submissions_statistics(course_id, is_verbose=False, download_folder=None):
         )
         if amount_ungraded_not_ignored != 0:
             logger.info(
-                "Total ungraded for assignment '%s' (CMID %s, ID %s): %s/%s",
+                "Total ungraded for assignment [%s] (CMID %s, ID %s): %s/%s",
                 assignment.name,
                 assignment.cmid,
                 assignment.uid,
@@ -221,3 +243,41 @@ def export_all(course_id, folder):
     export_grades(course_id, folder)
     export_materials(course_id, Path(folder) / "Materials")
     export_submissions(course_id, Path(folder) / "Submissions")
+
+
+def status_report(course_id):
+    """
+    Generates a short report of the students for a specific course.
+    Returns a list of StudentStatus tuples.
+    """
+    assignments = get_assignments(course_id)
+    users_map = get_students(course_id)
+
+    submissions_by_user = Counter()
+    last_submission_by_user = defaultdict(
+        lambda: SubmissionTuple(name="Nothing", timestamp=0)
+    )
+
+    for assignment in assignments:
+        for submission in assignment.submissions:
+            user_name = users_map[submission.user_id]
+            submissions_by_user[user_name] += 1
+
+            if last_submission_by_user[user_name].timestamp < submission.timestamp:
+                last_submission_by_user[user_name] = SubmissionTuple(
+                    name=assignment.name, timestamp=submission.timestamp
+                )
+
+    student_statuses = []
+    for user, submission_count in submissions_by_user.items():
+        student_statuses.append(
+            StudentStatus(
+                user, submission_count, last_submission_by_user[user].user_name
+            )
+        )
+
+    student_statuses = sorted(
+        student_statuses, key=lambda student_status: student_status.total_submissions
+    )
+
+    return student_statuses

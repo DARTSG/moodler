@@ -26,8 +26,14 @@ and install requests package
 import argparse
 import logging
 from pprint import pprint
+from tabulate import tabulate
 
-from moodler.moodle import export_all, export_feedbacks, submissions_statistics
+from moodler.moodle import (
+    export_all,
+    export_feedbacks,
+    submissions_statistics,
+    status_report,
+)
 from moodler.students import get_students
 
 logger = logging.getLogger(__name__)
@@ -40,7 +46,7 @@ def setup_logging():
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.set_defaults(which="none")
-    subparsers = parser.add_subparsers()
+    subparsers = parser.add_subparsers(dest="which", required=True)
 
     parser_ungraded = subparsers.add_parser(
         "ungraded", help="Prints the amount of ungraded submissions"
@@ -57,7 +63,6 @@ def parse_args():
         "-d",
         help="If specified, the ungraded exercises will be written there",
     )
-    parser_ungraded.set_defaults(which="ungraded")
 
     parser_feedbacks = subparsers.add_parser(
         "feedbacks", help="Exports the feedbacks for a course"
@@ -66,7 +71,6 @@ def parse_args():
     parser_feedbacks.add_argument(
         "download_folder", type=str, help="The folder to export to"
     )
-    parser_feedbacks.set_defaults(which="feedbacks")
 
     parser_export = subparsers.add_parser(
         "export", help="Exports submissions, materials, and grades for a course"
@@ -75,7 +79,6 @@ def parse_args():
     parser_export.add_argument(
         "download_folder", type=str, help="The folder to export to"
     )
-    parser_export.set_defaults(which="export")
 
     parser_list_students = subparsers.add_parser(
         "list_students", help="List names of all students"
@@ -83,7 +86,14 @@ def parse_args():
     parser_list_students.add_argument(
         "course_id", type=int, help="The course id to query"
     )
-    parser_list_students.set_defaults(which="list_students")
+    parser_student_report = subparsers.add_parser(
+        "student_report",
+        help="Prints a pretty table containing the amount of submissions "
+        "for each student and the last submission name",
+    )
+    parser_student_report.add_argument(
+        "course_id", type=int, help="The course id to query"
+    )
 
     args = parser.parse_args()
     return args, parser
@@ -109,6 +119,10 @@ def main():
         export_feedbacks(args.course_id, args.download_folder)
     elif "export" == args.which:
         export_all(args.course_id, args.download_folder)
+    elif "student_report" == args.which:
+        student_statuses = status_report(args.course_id)
+        headers = ("Student", "Submissions", "Last Submission")
+        print(tabulate(student_statuses, headers, tablefmt="pretty"))
 
 
 if "__main__" == __name__:
