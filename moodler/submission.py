@@ -67,11 +67,8 @@ class Submission(object):
         return ("notgraded" == self.gradingstatus) or self.resubmitted
 
     def __repr__(self):
-        return (
-            "Submission(user_id={}, gradingstatus={}, grade={}, "
-            "submitted={})".format(
-                self.user_id, self.gradingstatus, self.grade, len(self.submission_files)
-            )
+        return "Submission(user_id={}, gradingstatus={}, grade={}, " "submitted={})".format(
+            self.user_id, self.gradingstatus, self.grade, len(self.submission_files)
         )
 
 
@@ -81,9 +78,7 @@ def mod_assign_get_submissions(assignment_ids):
     mapping assignment id to submissions
     {id: [..]}
     """
-    response = call_moodle_api(
-        "mod_assign_get_submissions", assignmentids=assignment_ids
-    )
+    response = call_moodle_api("mod_assign_get_submissions", assignmentids=assignment_ids)
 
     submissions = {}
     for assign in response["assignments"]:

@@ -34,9 +34,7 @@ class InvalidUploadGradingConfirmationPage(UploadException):
     pass
 
 
-def get_params_from_grading_page(
-    assignment_id: str, session: requests.Session
-) -> Tuple[str, str]:
+def get_params_from_grading_page(assignment_id: str, session: requests.Session) -> Tuple[str, str]:
     """
     Getting contextid and sesskey parameters needed for the upload worksheet requests
     :return: A tuple of contextid and sesskey parameters.
@@ -55,13 +53,11 @@ def get_params_from_grading_page(
 
     if contextid_match is None:
         raise InvalidGradingPage(
-            "The contextid required to upload the "
-            "grading sheet to moodle was not found."
+            "The contextid required to upload the " "grading sheet to moodle was not found."
         )
     if sesskey_match is None:
         raise InvalidGradingPage(
-            "The sesskey required to upload the "
-            "grading sheet to moodle was not found."
+            "The sesskey required to upload the " "grading sheet to moodle was not found."
         )
     return contextid_match.group(1), sesskey_match.group(1)
 
@@ -87,8 +83,7 @@ def get_params_from_upload_grading_worksheet_page(
 
     if gradesfile_match is None:
         raise InvalidUploadGradingWorksheetPage(
-            "The gradesfile required to upload the "
-            "grading sheet to moodle was not found."
+            "The gradesfile required to upload the " "grading sheet to moodle was not found."
         )
     return gradesfile_match.group(1)
 
@@ -117,9 +112,7 @@ def upload_file_to_moodle(
     }
 
     params = {"action": "upload"}
-    session.post(
-        URL + "/repository/repository_ajax.php", params=params, files=multipart_params
-    )
+    session.post(URL + "/repository/repository_ajax.php", params=params, files=multipart_params)
 
 
 def get_params_from_submitting_uploaded_grading_worksheet(
@@ -156,13 +149,11 @@ def get_params_from_submitting_uploaded_grading_worksheet(
 
     if importid_match is None:
         raise InvalidUploadGradingConfirmationPage(
-            "The importid required to upload the "
-            "grading sheet to moodle was not found."
+            "The importid required to upload the " "grading sheet to moodle was not found."
         )
     if draftid_match is None:
         raise InvalidUploadGradingConfirmationPage(
-            "The draftid required to upload the "
-            "grading sheet to moodle was not found."
+            "The draftid required to upload the " "grading sheet to moodle was not found."
         )
     return importid_match.group(1), draftid_match.group(1)
 
@@ -236,7 +227,5 @@ def upload_grading_worksheet(
     )
 
     logger.info(
-        "Assignment {}: Updated {} grades".format(
-            assignment_name, updated_submissions_count
-        )
+        "Assignment {}: Updated {} grades".format(assignment_name, updated_submissions_count)
     )
