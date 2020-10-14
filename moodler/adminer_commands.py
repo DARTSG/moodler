@@ -127,13 +127,9 @@ def run_sql_command_using_token(session, token_value, sql_command):
         "limit": (None, ""),
         "token": (None, token_value),
     }
-    response = session.post(
-        URL + "/local/adminer/lib/run_adminer.php", params=params, files=files
-    )
+    response = session.post(URL + "/local/adminer/lib/run_adminer.php", params=params, files=files)
 
-    rows_affected_counts = re.findall(
-        RESPONSE_RESULT_PATTERN, response.content.decode()
-    )
+    rows_affected_counts = re.findall(RESPONSE_RESULT_PATTERN, response.content.decode())
 
     # Making sure there is at least one row affected by the query
     if not any(map(int, rows_affected_counts)):
