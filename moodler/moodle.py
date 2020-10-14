@@ -15,7 +15,7 @@ from moodler.download import (
 from moodler.moodle_connect import connect_to_server
 from moodler.feedbacks import feedbacks
 from moodler.students import get_students
-from moodler.sections import core_course_get_contents, locate_course_name
+from moodler.sections import core_course_get_contents, get_course_by_id
 
 logger = logging.getLogger(__name__)
 
@@ -109,9 +109,7 @@ def submissions_statistics(course_id, is_verbose=False, download_folder=None):
                 ungraded_ignored,
             )
 
-        amount_ungraded_not_ignored = current_assignment_ungraded_amount - len(
-            ungraded_ignored
-        )
+        amount_ungraded_not_ignored = current_assignment_ungraded_amount - len(ungraded_ignored)
         if amount_ungraded_not_ignored != 0:
             logger.info(
                 "Total ungraded for assignment [%s] (CMID %s, ID %s): %s/%s",
@@ -203,29 +201,28 @@ def export_materials(course_id, folder):
                 # If module is an assignment - download attachments and description
                 assign = assigns[module["instance"]]
                 if len(assign.description) > 0:
-                    description_file = section_folder / Path(assign.name).with_suffix(
-                        ".txt"
-                    )
+                    description_file = section_folder / Path(assign.name).with_suffix(".txt")
                     with open(description_file, "w") as f:
                         f.write(assign.description)
                 for attachment in assign.attachments:
                     download_file(attachment, section_folder)
             else:
-                logger.warning(
-                    "Skipped export from unknown module '%s'", module["modname"]
-                )
+                logger.warning("Skipped export from unknown module '%s'", module["modname"])
 
 
 def export_grades(course_id, output_path, should_export_feedback=False):
     """
     Exports the complete grade file to the given folder in csv format
     """
-    course_name = locate_course_name(course_id)
+    course = get_course_by_id(course_id)
+    if not course:
+        raise ValueError(f"Course with ID {course_id} not found.")
+
     session = connect_to_server(MOODLE_USERNAME, MOODLE_PASSWORD)
 
     try:
         grades_spreadsheet_file = download_course_grades_report(
-            course_id, course_name, should_export_feedback, output_path, session
+            course.id, course.name, should_export_feedback, output_path, session
         )
 
         logger.info(
@@ -254,9 +251,7 @@ def status_report(course_id):
     users_map = get_students(course_id)
 
     submissions_by_user = Counter()
-    last_submission_by_user = defaultdict(
-        lambda: SubmissionTuple(name="Nothing", timestamp=0)
-    )
+    last_submission_by_user = defaultdict(lambda: SubmissionTuple(name="Nothing", timestamp=0))
 
     for assignment in assignments:
         for submission in assignment.submissions:
