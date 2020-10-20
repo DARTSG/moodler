@@ -109,7 +109,9 @@ def submissions_statistics(course_id, is_verbose=False, download_folder=None):
                 ungraded_ignored,
             )
 
-        amount_ungraded_not_ignored = current_assignment_ungraded_amount - len(ungraded_ignored)
+        amount_ungraded_not_ignored = current_assignment_ungraded_amount - len(
+            ungraded_ignored
+        )
         if amount_ungraded_not_ignored != 0:
             logger.info(
                 "Total ungraded for assignment [%s] (CMID %s, ID %s): %s/%s",
@@ -178,36 +180,46 @@ def export_materials(course_id, folder):
     for section in sections:
         section_folder = Path(folder) / Path(section["name"])
         for module in section["modules"]:
+            module_name = module["name"]
+            module_type = module["modname"]
+
             # Create section folder
-            if module["modname"] in ["feedback", "forum"]:
+            if module_type in ["feedback", "forum"]:
                 continue
 
             # If this is a downloadable module, create the section
-            if module["modname"] in ("resource", "folder", "assign"):
+            if module_type in ("resource", "folder", "assign", "url"):
                 if section["name"] not in created:
                     section_folder.mkdir(parents=True, exist_ok=True)
                     created.add(section["name"])
 
-            if module["modname"] in ("resource", "folder"):
+            if module_type in ("resource", "folder"):
                 download_folder = section_folder
                 # If its a folder, create a subfolder
-                if module["modname"] == "folder":
-                    download_folder = download_folder / Path(module["name"])
+                if module_type == "folder":
+                    download_folder = download_folder / Path(module_name)
                     download_folder.mkdir(parents=True)
 
                 for resource in module["contents"]:
                     download_file(resource["fileurl"], download_folder)
-            elif module["modname"] == "assign":
+            elif module_type == "assign":
                 # If module is an assignment - download attachments and description
                 assign = assigns[module["instance"]]
                 if len(assign.description) > 0:
-                    description_file = section_folder / Path(assign.name).with_suffix(".txt")
-                    with open(description_file, "w") as f:
-                        f.write(assign.description)
+                    description_file = section_folder / Path(
+                        assign.name
+                    ).with_suffix(".txt")
+                    description_file.write_text(assign.description)
                 for attachment in assign.attachments:
                     download_file(attachment, section_folder)
+            elif module_type == "url":
+                url_file = section_folder / Path(f"{module_name}_url.txt")
+                # Assuming a url module can only have 1 url inside
+                url_file.write_text(module["contents"][0]["fileurl"])
             else:
-                logger.warning("Skipped export from unknown module '%s'", module["modname"])
+                logger.warning(
+                    "Skipped export from unknown module '%s'", module_type
+                )
 
 
 def export_grades(course_id, output_path, should_export_feedback=False):
@@ -251,14 +263,19 @@ def status_report(course_id):
     users_map = get_students(course_id)
 
     submissions_by_user = Counter()
-    last_submission_by_user = defaultdict(lambda: SubmissionTuple(name="Nothing", timestamp=0))
+    last_submission_by_user = defaultdict(
+        lambda: SubmissionTuple(name="Nothing", timestamp=0)
+    )
 
     for assignment in assignments:
         for submission in assignment.submissions:
             user_name = users_map[submission.user_id]
             submissions_by_user[user_name] += 1
 
-            if last_submission_by_user[user_name].timestamp < submission.timestamp:
+            if (
+                last_submission_by_user[user_name].timestamp
+                < submission.timestamp
+            ):
                 last_submission_by_user[user_name] = SubmissionTuple(
                     name=assignment.name, timestamp=submission.timestamp
                 )
@@ -266,11 +283,14 @@ def status_report(course_id):
     student_statuses = []
     for user, submission_count in submissions_by_user.items():
         student_statuses.append(
-            StudentStatus(user, submission_count, last_submission_by_user[user].name)
+            StudentStatus(
+                user, submission_count, last_submission_by_user[user].name
+            )
         )
 
     student_statuses = sorted(
-        student_statuses, key=lambda student_status: student_status.total_submissions
+        student_statuses,
+        key=lambda student_status: student_status.total_submissions,
     )
 
     return student_statuses
