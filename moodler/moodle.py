@@ -175,23 +175,21 @@ def export_materials(course_id, folder):
     assigns = {assign.uid: assign for assign in get_assignments(course_id)}
     sections = core_course_get_contents(course_id)
 
-    created = set()
-
     for section in sections:
         section_folder = Path(folder) / Path(section["name"])
         for module in section["modules"]:
             module_name = module["name"]
             module_type = module["modname"]
 
-            # Create section folder
-            if module_type in ["feedback", "forum"]:
+            if module_type not in ("resource", "folder", "assign", "url"):
+                if module_type not in ["feedback", "forum"]:
+                    logger.warning(
+                        "Skipped export from unknown module '%s'", module_type
+                    )
                 continue
 
-            # If this is a downloadable module, create the section
-            if module_type in ("resource", "folder", "assign", "url"):
-                if section["name"] not in created:
-                    section_folder.mkdir(parents=True, exist_ok=True)
-                    created.add(section["name"])
+            # This is one of the known modules - create the section
+            section_folder.mkdir(parents=True, exist_ok=True)
 
             if module_type in ("resource", "folder"):
                 download_folder = section_folder
@@ -216,10 +214,6 @@ def export_materials(course_id, folder):
                 url_file = section_folder / Path(f"{module_name}_url.txt")
                 # Assuming a url module can only have 1 url inside
                 url_file.write_text(module["contents"][0]["fileurl"])
-            else:
-                logger.warning(
-                    "Skipped export from unknown module '%s'", module_type
-                )
 
 
 def export_grades(course_id, output_path, should_export_feedback=False):
