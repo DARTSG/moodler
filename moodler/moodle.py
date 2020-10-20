@@ -142,10 +142,10 @@ def export_feedbacks(course_id, folder):
     """
     for feedback in feedbacks(course_id):
         if feedback.responses_count == 0:
-            # Stop if reached a feedback that wasn't filled yet
-            return
-        file_path = Path(folder) / Path(feedback.name)
-        with open(str(file_path) + ".csv", "w", newline="") as f:
+            logger.info(f"Skipped empty feedback [{feedback.name}]")
+            continue
+        file_path = Path(folder) / Path(feedback.name).with_suffix(".csv")
+        with file_path.open(mode="w", newline="") as f:
             writer = csv.writer(f)
             writer.writerow(feedback.answers.keys())
             writer.writerows(zip(*feedback.answers.values()))
