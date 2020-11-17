@@ -111,9 +111,10 @@ def download_all_submissions(
     params = {"id": assignment_id, "action": "downloadall"}
     try:
         response = session.get(URL + "/mod/assign/view.php", params=params)
-    except ConnectionError as exc:
-        logger.exception(exc)
-        raise DownloadException(f'Failed to download submissions for "{assignment_name}"')
+    except ConnectionError:
+        msg = f'Failed to download submissions for "{assignment_name}"'
+        logger.exception(msg)
+        raise DownloadException(msg)
 
     all_submissions_file_name = Path(output_path) / Path(
         assignment_name + ASSIGNMENT_ALL_SUBMISSIONS_EXT
@@ -151,7 +152,9 @@ def download_grading_worksheet(
         response = session.get(URL + "/mod/assign/view.php", params=params)
     except ConnectionError as exc:
         logger.exception(exc)
-        raise DownloadException(f'Failed to download grading worksheet for "{assignment_name}"')
+        raise DownloadException(
+            f'Failed to download grading worksheet for "{assignment_name}"'
+        )
 
     grading_worksheet_file_name = Path(output_path) / Path(
         assignment_name + ASSIGNMENT_WORKSHEET_EXT
