@@ -1,3 +1,4 @@
+import logging
 import re
 from pathlib import Path
 import urllib.request
@@ -5,6 +6,8 @@ import urllib.parse
 
 from moodler.moodle_exception import MoodlerException
 from moodler.config import TOKEN, URL
+
+logger = logging.getLogger(__name__)
 
 
 ASSIGNMENT_WORKSHEET_EXT = ".csv"
@@ -106,9 +109,12 @@ def download_all_submissions(
     """
     # Build the get request.
     params = {"id": assignment_id, "action": "downloadall"}
-    response = session.get(URL + "/mod/assign/view.php", params=params)
-
-    # TODO: Raise an exception in case the file download failed
+    try:
+        response = session.get(URL + "/mod/assign/view.php", params=params)
+    except ConnectionError:
+        msg = f'Failed to download submissions for "{assignment_name}"'
+        logger.exception(msg)
+        raise DownloadException(msg)
 
     all_submissions_file_name = Path(output_path) / Path(
         assignment_name + ASSIGNMENT_ALL_SUBMISSIONS_EXT
@@ -142,9 +148,13 @@ def download_grading_worksheet(
         "action": "viewpluginpage",
         "pluginaction": "downloadgrades",
     }
-    response = session.get(URL + "/mod/assign/view.php", params=params)
-
-    # TODO: Raise an exception in case the file download failed
+    try:
+        response = session.get(URL + "/mod/assign/view.php", params=params)
+    except ConnectionError as exc:
+        logger.exception(exc)
+        raise DownloadException(
+            f'Failed to download grading worksheet for "{assignment_name}"'
+        )
 
     grading_worksheet_file_name = Path(output_path) / Path(
         assignment_name + ASSIGNMENT_WORKSHEET_EXT
