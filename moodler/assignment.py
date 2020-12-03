@@ -4,8 +4,16 @@ import requests
 from moodler.config import URL
 from moodler.moodle_exception import MoodlerException
 from moodler.moodle_api import call_moodle_api
-from moodler.students import get_user_name, get_students_ids_by_name, get_students
-from moodler.submission import Submission, mod_assign_get_submissions, MissingGrade
+from moodler.students import (
+    get_user_name,
+    get_students_ids_by_name,
+    get_students,
+)
+from moodler.submission import (
+    Submission,
+    mod_assign_get_submissions,
+    MissingGrade,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +39,8 @@ class Assignment(object):
         self.name = assignment_json["name"]
         self.description = assignment_json["intro"]
         self.attachments = [
-            attachment["fileurl"] for attachment in assignment_json["introattachments"]
+            attachment["fileurl"]
+            for attachment in assignment_json["introattachments"]
         ]
 
         self.submissions = []
@@ -44,7 +53,9 @@ class Assignment(object):
                     break
             if "new" != submission["status"]:
                 try:
-                    self.submissions.append(Submission(user_id, grade_json, submission))
+                    self.submissions.append(
+                        Submission(user_id, grade_json, submission)
+                    )
                 except MissingGrade:
                     logger.warning(
                         'Missing grade for student "{}" in assignment "{}". Fix ASAP at {}'.format(
@@ -55,7 +66,9 @@ class Assignment(object):
                             ),
                         )
                     )
-                    self.submissions.append(Submission(user_id, None, submission))
+                    self.submissions.append(
+                        Submission(user_id, None, submission)
+                    )
 
         self._assignment_json = assignment_json
         self._submissions_json = submissions_json
@@ -91,7 +104,9 @@ class Assignment(object):
             logger.info(
                 "Locked submissions for assignment '%s' for %s",
                 self.name,
-                students_names if students_names is not None else "all students.",
+                students_names
+                if students_names is not None
+                else "all students.",
             )
 
     def unlock_submissions(self, course_id, students_names=None):
@@ -111,7 +126,9 @@ class Assignment(object):
             logger.info(
                 "Unlocked submissions for assignment '%s' for %s",
                 self.name,
-                students_names if students_names is not None else "all students.",
+                students_names
+                if students_names is not None
+                else "all students.",
             )
 
 
@@ -119,21 +136,31 @@ def mod_assign_lock_submissions(assignment_id, user_ids):
     """
     Locks submissions for a specific assignments for a specific user(s).
     """
-    call_moodle_api("mod_assign_lock_submissions", assignmentid=assignment_id, userids=user_ids)
+    call_moodle_api(
+        "mod_assign_lock_submissions",
+        assignmentid=assignment_id,
+        userids=user_ids,
+    )
 
 
 def mod_assign_unlock_submissions(assignment_id, user_ids):
     """
     Unlocks submissions for a specific assignments for a specific user(s).
     """
-    call_moodle_api("mod_assign_unlock_submissions", assignmentid=assignment_id, userids=user_ids)
+    call_moodle_api(
+        "mod_assign_unlock_submissions",
+        assignmentid=assignment_id,
+        userids=user_ids,
+    )
 
 
 def mod_assign_get_grades(assignment_ids):
     """
     Returns the grades for all the assignments
     """
-    response = call_moodle_api("mod_assign_get_grades", assignmentids=assignment_ids)
+    response = call_moodle_api(
+        "mod_assign_get_grades", assignmentids=assignment_ids
+    )
 
     grades = {}
     for grds in response["assignments"]:
@@ -147,12 +174,15 @@ def mod_assign_get_assignments(course_id):
     Returns a dictionary mapping assignment id to its name from a specified
     course
     """
-    response = call_moodle_api("mod_assign_get_assignments", courseids=[course_id])
+    response = call_moodle_api(
+        "mod_assign_get_assignments", courseids=[course_id]
+    )
 
     if not response["courses"]:
         raise EmptyCourseError(
-            "Received an empty course. It could be that the course does not have any assignments."
-        )
+            "Received an empty course." +
+            "It could be that the course does not have any assignments.\n" +
+            response)
 
     return response["courses"][0]["assignments"]
 
