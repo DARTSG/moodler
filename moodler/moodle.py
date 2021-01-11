@@ -136,10 +136,11 @@ def submissions_statistics(course_id, is_verbose=False, download_folder=None):
     }
 
 
-def export_feedbacks(course_id, folder):
+def export_feedbacks(course_id, folder: Path):
     """
     Exports the feedbacks of a course, in csv format, to a speicifed folder.
     """
+    folder.mkdir(parents=True, exist_ok=True)
     for feedback in feedbacks(course_id):
         if feedback.responses_count == 0:
             logger.info(f"Skipped empty feedback [{feedback.name}]")
@@ -196,7 +197,7 @@ def export_materials(course_id, folder):
                 # If its a folder, create a subfolder
                 if module_type == "folder":
                     download_folder = download_folder / Path(module_name)
-                    download_folder.mkdir(parents=True)
+                    download_folder.mkdir(parents=True, exist_ok=True)
 
                 for resource in module["contents"]:
                     download_file(resource["fileurl"], download_folder)
@@ -239,13 +240,14 @@ def export_grades(course_id, output_path, should_export_feedback=False):
         logger.exception("Failed downloading grade report")
 
 
-def export_all(course_id, folder):
+def export_all(course_id, folder: Path):
     """
     Exports submissions, materials, and grades for the given course
     """
     export_grades(course_id, folder)
     export_materials(course_id, Path(folder) / "Materials")
     export_submissions(course_id, Path(folder) / "Submissions")
+    export_feedbacks(course_id, Path(folder) / "Feedbacks")
 
 
 def status_report(course_id):
