@@ -18,6 +18,8 @@ Works and tested with python 3.7.7
 
 1. Install the requirements file `pip install -r requirements.txt`
 2. Create you .env file (see example in the file `env_example`)
+3. Extract the token for the .env file from this URL: `http://moodleip/admin/settings.php?section=webservicetokens`
+4. Enroll the `moodle` user the the relevant course.
 
 ## Usage
 
