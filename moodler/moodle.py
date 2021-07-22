@@ -196,7 +196,7 @@ def export_materials(course_id, folder):
             module_type = module["modname"]
 
             if module_type not in ("resource", "folder", "assign", "url"):
-                if module_type not in ["feedback", "forum"]:
+                if module_type not in ["feedback", "forum", "label"]:
                     logger.warning(
                         "Skipped export from unknown module '%s'", module_type
                     )
