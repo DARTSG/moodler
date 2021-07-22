@@ -4,7 +4,7 @@ from pathlib import Path
 import csv
 from collections import Counter, defaultdict
 
-from moodler.assignment import get_assignments
+from moodler.assignment import Assignment, get_assignments
 from moodler.config import STUDENTS_TO_IGNORE, MOODLE_USERNAME, MOODLE_PASSWORD
 from moodler.download import (
     download_file,
@@ -168,6 +168,19 @@ def export_submissions(course_id, download_folder):
             )
 
 
+def _export_assignment(assignment: Assignment, folder: Path):
+    assign_folder = folder / Path(assignment.name)
+    assign_folder.mkdir(parents=True, exist_ok=True)
+
+    if len(assignment.description) > 0:
+        description_file = assign_folder / Path(assignment.name).with_suffix(
+            ".txt"
+        )
+        description_file.write_text(assignment.description)
+    for attachment in assignment.attachments:
+        download_file(attachment, assign_folder)
+
+
 def export_materials(course_id, folder):
     """
     Downloads all the materials from a course to a given folder
@@ -204,13 +217,7 @@ def export_materials(course_id, folder):
             elif module_type == "assign":
                 # If module is an assignment - download attachments and description
                 assign = assigns[module["instance"]]
-                if len(assign.description) > 0:
-                    description_file = section_folder / Path(
-                        assign.name
-                    ).with_suffix(".txt")
-                    description_file.write_text(assign.description)
-                for attachment in assign.attachments:
-                    download_file(attachment, section_folder)
+                _export_assignment(assign, section_folder)
             elif module_type == "url":
                 url_file = section_folder / Path(f"{module_name}_url.txt")
                 # Assuming a url module can only have 1 url inside
