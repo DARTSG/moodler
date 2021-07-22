@@ -1,5 +1,4 @@
 import logging
-import requests
 
 from moodler.config import URL
 from moodler.moodle_exception import MoodlerException
