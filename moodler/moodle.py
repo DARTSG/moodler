@@ -181,6 +181,15 @@ def _export_assignment(assignment: Assignment, folder: Path):
         download_file(attachment, assign_folder)
 
 
+def _export_page(page_module: dict, folder: Path):
+    page_folder = folder / Path(page_module["name"])
+    page_folder.mkdir(parents=True, exist_ok=True)
+
+    # Assuming a page can module will have only 1 content
+    assert len(page_module["contents"]) == 1
+    download_file(page_module["contents"][0]["fileurl"], page_folder)
+
+
 def export_materials(course_id, folder):
     """
     Downloads all the materials from a course to a given folder
@@ -195,10 +204,18 @@ def export_materials(course_id, folder):
             module_name = module["name"]
             module_type = module["modname"]
 
-            if module_type not in ("resource", "folder", "assign", "url"):
+            if module_type not in (
+                "resource",
+                "folder",
+                "assign",
+                "url",
+                "page",
+            ):
                 if module_type not in ["feedback", "forum", "label"]:
                     logger.warning(
-                        "Skipped export from unknown module '%s'", module_type
+                        "Skipped export from unknown module '{}' of type '{}'".format(
+                            module_name, module_type
+                        )
                     )
                 continue
 
@@ -221,7 +238,10 @@ def export_materials(course_id, folder):
             elif module_type == "url":
                 url_file = section_folder / Path(f"{module_name}_url.txt")
                 # Assuming a url module can only have 1 url inside
+                assert len(module["contents"]) == 1
                 url_file.write_text(module["contents"][0]["fileurl"])
+            elif module_type == "page":
+                _export_page(module, section_folder)
 
 
 def export_grades(course_id, output_path, should_export_feedback=False):
