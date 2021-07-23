@@ -1,10 +1,11 @@
 import logging
+from moodler.utilities import safe_path
 from typing import NamedTuple
 from pathlib import Path
 import csv
 from collections import Counter, defaultdict
 
-from moodler.assignment import get_assignments
+from moodler.assignment import Assignment, get_assignments
 from moodler.config import STUDENTS_TO_IGNORE, MOODLE_USERNAME, MOODLE_PASSWORD
 from moodler.download import (
     download_file,
@@ -136,7 +137,7 @@ def submissions_statistics(course_id, is_verbose=False, download_folder=None):
     }
 
 
-def export_feedbacks(course_id, folder: Path):
+def export_feedbacks(course_id: int, folder: Path):
     """
     Exports the feedbacks of a course, in csv format, to a speicifed folder.
     """
@@ -145,7 +146,7 @@ def export_feedbacks(course_id, folder: Path):
         if feedback.responses_count == 0:
             logger.info(f"Skipped empty feedback [{feedback.name}]")
             continue
-        file_path = Path(folder) / Path(feedback.name).with_suffix(".csv")
+        file_path = Path(folder) / safe_path(feedback.name).with_suffix(".csv")
         with file_path.open(mode="w", newline="") as f:
             writer = csv.writer(f)
             writer.writerow(feedback.answers.keys())
@@ -168,6 +169,28 @@ def export_submissions(course_id, download_folder):
             )
 
 
+def _export_assignment(assignment: Assignment, folder: Path):
+    assign_folder = folder / safe_path(assignment.name)
+    assign_folder.mkdir(parents=True, exist_ok=True)
+
+    if len(assignment.description) > 0:
+        description_file = assign_folder / safe_path(assignment.name).with_suffix(
+            ".txt"
+        )
+        description_file.write_text(assignment.description)
+    for attachment in assignment.attachments:
+        download_file(attachment, assign_folder)
+
+
+def _export_page(page_module: dict, folder: Path):
+    page_folder = folder / safe_path(page_module["name"])
+    page_folder.mkdir(parents=True, exist_ok=True)
+
+    # Assuming a page can module will have only 1 content
+    assert len(page_module["contents"]) == 1
+    download_file(page_module["contents"][0]["fileurl"], page_folder)
+
+
 def export_materials(course_id, folder):
     """
     Downloads all the materials from a course to a given folder
@@ -177,15 +200,24 @@ def export_materials(course_id, folder):
     sections = core_course_get_contents(course_id)
 
     for section in sections:
-        section_folder = Path(folder) / Path(section["name"])
+        safe_section_name = section["name"].replace("/", ".")
+        section_folder = Path(folder) / safe_section_name
         for module in section["modules"]:
             module_name = module["name"]
             module_type = module["modname"]
 
-            if module_type not in ("resource", "folder", "assign", "url"):
-                if module_type not in ["feedback", "forum"]:
+            if module_type not in (
+                "resource",
+                "folder",
+                "assign",
+                "url",
+                "page",
+            ):
+                if module_type not in ["feedback", "forum", "label"]:
                     logger.warning(
-                        "Skipped export from unknown module '%s'", module_type
+                        "Skipped export from unknown module '{}' of type '{}'".format(
+                            module_name, module_type
+                        )
                     )
                 continue
 
@@ -196,7 +228,7 @@ def export_materials(course_id, folder):
                 download_folder = section_folder
                 # If its a folder, create a subfolder
                 if module_type == "folder":
-                    download_folder = download_folder / Path(module_name)
+                    download_folder = download_folder / safe_path(module_name)
                     download_folder.mkdir(parents=True, exist_ok=True)
 
                 for resource in module["contents"]:
@@ -204,17 +236,14 @@ def export_materials(course_id, folder):
             elif module_type == "assign":
                 # If module is an assignment - download attachments and description
                 assign = assigns[module["instance"]]
-                if len(assign.description) > 0:
-                    description_file = section_folder / Path(
-                        assign.name
-                    ).with_suffix(".txt")
-                    description_file.write_text(assign.description)
-                for attachment in assign.attachments:
-                    download_file(attachment, section_folder)
+                _export_assignment(assign, section_folder)
             elif module_type == "url":
-                url_file = section_folder / Path(f"{module_name}_url.txt")
+                url_file = section_folder / safe_path(f"{module_name}_url.txt")
                 # Assuming a url module can only have 1 url inside
+                assert len(module["contents"]) == 1
                 url_file.write_text(module["contents"][0]["fileurl"])
+            elif module_type == "page":
+                _export_page(module, section_folder)
 
 
 def export_grades(course_id, output_path, should_export_feedback=False):
@@ -244,9 +273,13 @@ def export_all(course_id, folder: Path):
     """
     Exports submissions, materials, and grades for the given course
     """
+    logger.info("Exporting grades...")
     export_grades(course_id, folder)
+    logger.info("Exporting materials...")
     export_materials(course_id, Path(folder) / "Materials")
+    logger.info("Exporting submissions...")
     export_submissions(course_id, Path(folder) / "Submissions")
+    logger.info("Exporting feedbacks...")
     export_feedbacks(course_id, Path(folder) / "Feedbacks")
 
 

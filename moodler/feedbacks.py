@@ -1,3 +1,4 @@
+from typing import List
 from moodler.moodle_api import call_moodle_api
 
 
@@ -24,7 +25,9 @@ def mod_feedback_get_feedbacks_by_courses(course_id):
     """
     Retrieves all feedbacks for a given course
     """
-    response = call_moodle_api("mod_feedback_get_feedbacks_by_courses", courseids=[course_id])
+    response = call_moodle_api(
+        "mod_feedback_get_feedbacks_by_courses", courseids=[course_id]
+    )
 
     return response["feedbacks"]
 
@@ -33,12 +36,14 @@ def mod_feedback_get_analysis(feedback_id):
     """
     Retrieves the responses for the given feedback id
     """
-    response = call_moodle_api("mod_feedback_get_analysis", feedbackid=feedback_id)
+    response = call_moodle_api(
+        "mod_feedback_get_analysis", feedbackid=feedback_id
+    )
 
     return response
 
 
-def feedbacks(course_id):
+def feedbacks(course_id) -> List[Feedback]:
     """
     Retrieve the feedbacks for a given course
     """

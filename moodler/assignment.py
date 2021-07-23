@@ -1,5 +1,4 @@
 import logging
-import requests
 
 from moodler.config import URL
 from moodler.moodle_exception import MoodlerException
@@ -180,9 +179,11 @@ def mod_assign_get_assignments(course_id):
 
     if not response["courses"]:
         raise EmptyCourseError(
-            "Received an empty course." +
-            "It could be that the course does not have any assignments.\n" +
-            response)
+            """Received an empty course.
+            It could be that the course does not have any assignments.\n{}""".format(
+                response
+            )
+        )
 
     return response["courses"][0]["assignments"]
 

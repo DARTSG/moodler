@@ -1,5 +1,7 @@
 # Update the following variables and save the file as .env
 
+# Use the token you created - which can be found here:
+# http://<MOODLE_IP>/admin/settings.php?section=webservicetokens
 TOKEN=123abcdefg
 URL=http://192.168.1.1
 
