@@ -1,4 +1,5 @@
 import logging
+from moodler.utilities import safe_path
 from typing import NamedTuple
 from pathlib import Path
 import csv
@@ -145,7 +146,7 @@ def export_feedbacks(course_id: int, folder: Path):
         if feedback.responses_count == 0:
             logger.info(f"Skipped empty feedback [{feedback.name}]")
             continue
-        file_path = Path(folder) / Path(feedback.safe_name).with_suffix(".csv")
+        file_path = Path(folder) / safe_path(feedback.name).with_suffix(".csv")
         with file_path.open(mode="w", newline="") as f:
             writer = csv.writer(f)
             writer.writerow(feedback.answers.keys())
@@ -169,11 +170,11 @@ def export_submissions(course_id, download_folder):
 
 
 def _export_assignment(assignment: Assignment, folder: Path):
-    assign_folder = folder / Path(assignment.safe_name)
+    assign_folder = folder / safe_path(assignment.name)
     assign_folder.mkdir(parents=True, exist_ok=True)
 
     if len(assignment.description) > 0:
-        description_file = assign_folder / Path(assignment.safe_name).with_suffix(
+        description_file = assign_folder / safe_path(assignment.name).with_suffix(
             ".txt"
         )
         description_file.write_text(assignment.description)
@@ -182,7 +183,7 @@ def _export_assignment(assignment: Assignment, folder: Path):
 
 
 def _export_page(page_module: dict, folder: Path):
-    page_folder = folder / Path(page_module["name"])
+    page_folder = folder / safe_path(page_module["name"])
     page_folder.mkdir(parents=True, exist_ok=True)
 
     # Assuming a page can module will have only 1 content
@@ -227,7 +228,7 @@ def export_materials(course_id, folder):
                 download_folder = section_folder
                 # If its a folder, create a subfolder
                 if module_type == "folder":
-                    download_folder = download_folder / Path(module_name)
+                    download_folder = download_folder / safe_path(module_name)
                     download_folder.mkdir(parents=True, exist_ok=True)
 
                 for resource in module["contents"]:
@@ -237,7 +238,7 @@ def export_materials(course_id, folder):
                 assign = assigns[module["instance"]]
                 _export_assignment(assign, section_folder)
             elif module_type == "url":
-                url_file = section_folder / Path(f"{module_name}_url.txt")
+                url_file = section_folder / safe_path(f"{module_name}_url.txt")
                 # Assuming a url module can only have 1 url inside
                 assert len(module["contents"]) == 1
                 url_file.write_text(module["contents"][0]["fileurl"])

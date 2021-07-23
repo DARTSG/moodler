@@ -81,11 +81,6 @@ class Assignment(object):
                 submissions.append(submission)
         return submissions
 
-    @property
-    def safe_name(self):
-        """self.name is often used in path -> using safe_name avoids path manipulation bugs"""
-        return self.name.replace("/", ".")
-
     def __repr__(self):
         return "Assignment(id={}, name={}, submissions={})".format(
             self.uid, self.name, len(self.submissions)

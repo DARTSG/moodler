@@ -15,11 +15,6 @@ class Feedback(object):
             for answer in question_json["data"]:
                 self.answers[question].append(answer)
 
-    @property
-    def safe_name(self):
-        """self.name is often used in path -> using safe_name avoids path manipulation bugs"""
-        return self.name.replace("/", ".")
-
     def __repr__(self):
         return "Feedback(uid={}, name={}, answers={})".format(
             self.uid, self.name, self.responses_count
