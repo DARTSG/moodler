@@ -1,5 +1,4 @@
 import logging
-import urllib
 
 from moodler.config import URL
 from moodler.moodle_exception import MoodlerException
@@ -37,8 +36,6 @@ class Assignment(object):
         # the actual ID that you see in the Moodle interface
         self.cmid = assignment_json["cmid"]
         self.name = assignment_json["name"]
-        # self.name is often used in path -> using safe_name avoids path manipulation bugs
-        self.safe_name = urllib.parse.quote_plus(assignment_json["name"])
         self.description = assignment_json["intro"]
         self.attachments = [
             attachment["fileurl"]
@@ -83,6 +80,11 @@ class Assignment(object):
             if submission.needs_grading():
                 submissions.append(submission)
         return submissions
+
+    @property
+    def safe_name(self):
+        """self.name is often used in path -> using safe_name avoids path manipulation bugs"""
+        return self.name.replace("/", ".")
 
     def __repr__(self):
         return "Assignment(id={}, name={}, submissions={})".format(

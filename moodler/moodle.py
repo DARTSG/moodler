@@ -136,7 +136,7 @@ def submissions_statistics(course_id, is_verbose=False, download_folder=None):
     }
 
 
-def export_feedbacks(course_id, folder: Path):
+def export_feedbacks(course_id: int, folder: Path):
     """
     Exports the feedbacks of a course, in csv format, to a speicifed folder.
     """
@@ -145,7 +145,7 @@ def export_feedbacks(course_id, folder: Path):
         if feedback.responses_count == 0:
             logger.info(f"Skipped empty feedback [{feedback.name}]")
             continue
-        file_path = Path(folder) / Path(feedback.name).with_suffix(".csv")
+        file_path = Path(folder) / Path(feedback.safe_name).with_suffix(".csv")
         with file_path.open(mode="w", newline="") as f:
             writer = csv.writer(f)
             writer.writerow(feedback.answers.keys())
@@ -199,7 +199,8 @@ def export_materials(course_id, folder):
     sections = core_course_get_contents(course_id)
 
     for section in sections:
-        section_folder = Path(folder) / Path(section["name"])
+        safe_section_name = section["name"].replace("/", ".")
+        section_folder = Path(folder) / safe_section_name
         for module in section["modules"]:
             module_name = module["name"]
             module_type = module["modname"]
@@ -271,9 +272,13 @@ def export_all(course_id, folder: Path):
     """
     Exports submissions, materials, and grades for the given course
     """
+    logger.info("Exporting grades...")
     export_grades(course_id, folder)
+    logger.info("Exporting materials...")
     export_materials(course_id, Path(folder) / "Materials")
+    logger.info("Exporting submissions...")
     export_submissions(course_id, Path(folder) / "Submissions")
+    logger.info("Exporting feedbacks...")
     export_feedbacks(course_id, Path(folder) / "Feedbacks")
 
 
