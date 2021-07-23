@@ -169,11 +169,11 @@ def export_submissions(course_id, download_folder):
 
 
 def _export_assignment(assignment: Assignment, folder: Path):
-    assign_folder = folder / Path(assignment.name)
+    assign_folder = folder / Path(assignment.safe_name)
     assign_folder.mkdir(parents=True, exist_ok=True)
 
     if len(assignment.description) > 0:
-        description_file = assign_folder / Path(assignment.name).with_suffix(
+        description_file = assign_folder / Path(assignment.safe_name).with_suffix(
             ".txt"
         )
         description_file.write_text(assignment.description)
