@@ -91,12 +91,13 @@ class Assignment(object):
         Locking submissions for this specific assignment.
         """
         if students_names is None:
-            if not only_lock_resubmissions:
-                students_ids = list(get_students(course_id).keys())
-            else:
-                students_ids = [sub.user_id for sub in self.submissions]
+            students_ids = list(get_students(course_id).keys())
         else:
             students_ids = get_students_ids_by_name(course_id, students_names)
+
+        if only_lock_resubmissions:
+            submitted_users = [sub.user_id for sub in self.submissions]
+            students_ids = set(submitted_users).intersection(students_ids)
 
         if not students_ids:
             logger.warning("No student was found! Aborting...")
