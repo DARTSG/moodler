@@ -102,7 +102,7 @@ class Assignment(object):
         if not students_ids:
             logger.warning("No student was found! Aborting...")
         else:
-            mod_assign_lock_submissions(self.uid, students_ids)
+            mod_assign_lock_submissions(self.uid, list(students_ids))
 
             logger.info(
                 "Locked submissions for assignment '%s' for %s",
