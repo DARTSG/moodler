@@ -36,10 +36,10 @@ class Assignment(object):
         # the actual ID that you see in the Moodle interface
         self.cmid = assignment_json["cmid"]
         self.name = assignment_json["name"]
-        self.description = assignment_json["intro"]
+        self.description = assignment_json.get("intro", "")
         self.attachments = [
             attachment["fileurl"]
-            for attachment in assignment_json["introattachments"]
+            for attachment in assignment_json.get("introattachments", [])
         ]
 
         self.submissions = []
@@ -86,7 +86,7 @@ class Assignment(object):
             self.uid, self.name, len(self.submissions)
         )
 
-    def lock_submissions(self, course_id, students_names=None):
+    def lock_submissions(self, course_id, students_names=None, only_lock_resubmissions=True):
         """
         Locking submissions for this specific assignment.
         """
@@ -95,17 +95,22 @@ class Assignment(object):
         else:
             students_ids = get_students_ids_by_name(course_id, students_names)
 
+        if only_lock_resubmissions:
+            submitted_users = [sub.user_id for sub in self.submissions]
+            students_ids = set(submitted_users).intersection(students_ids)
+
         if not students_ids:
             logger.warning("No student was found! Aborting...")
         else:
-            mod_assign_lock_submissions(self.uid, students_ids)
+            mod_assign_lock_submissions(self.uid, list(students_ids))
 
             logger.info(
                 "Locked submissions for assignment '%s' for %s",
                 self.name,
                 students_names
                 if students_names is not None
-                else "all students.",
+                else "all students" +
+                     (" that submitted the exercise" if only_lock_resubmissions else ""),
             )
 
     def unlock_submissions(self, course_id, students_names=None):

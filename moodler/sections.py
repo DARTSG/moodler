@@ -71,7 +71,7 @@ def get_assignments_by_section(course_id, sections_names=None, assignments_names
 
     if sections_names is not None:
         # Filter out section names
-        sections = [section for section in sections if section["name"] not in sections_names]
+        sections = [section for section in sections if section["name"] in sections_names]
 
         found_sections = set(section["name"] for section in sections)
         missing_sections = set(sections_names).difference(found_sections)
