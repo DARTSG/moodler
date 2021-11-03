@@ -29,11 +29,6 @@ class EmptyCourseError(AssignmentException):
     pass
 
 
-def default_get_json(json_object, target_field, default_value=""):
-    """Tries to get a field from a json object, returning a default value if the field doesn't exist"""
-    return json_object[target_field] if target_field in json_object else default_value
-
-
 class Assignment(object):
     def __init__(self, assignment_json, submissions_json, grades_json):
         # a random number Moodle generates in API (not seen when you use Moodle visually)
@@ -41,10 +36,10 @@ class Assignment(object):
         # the actual ID that you see in the Moodle interface
         self.cmid = assignment_json["cmid"]
         self.name = assignment_json["name"]
-        self.description = default_get_json(assignment_json, "intro")
+        self.description = assignment_json.get("intro", "")
         self.attachments = [
             attachment["fileurl"]
-            for attachment in default_get_json(assignment_json, "introattachments", [])
+            for attachment in assignment_json.get("introattachments", [])
         ]
 
         self.submissions = []
@@ -91,12 +86,15 @@ class Assignment(object):
             self.uid, self.name, len(self.submissions)
         )
 
-    def lock_submissions(self, course_id, students_names=None):
+    def lock_submissions(self, course_id, students_names=None, only_lock_resubmissions=True):
         """
         Locking submissions for this specific assignment.
         """
         if students_names is None:
-            students_ids = [sub.user_id for sub in self.submissions]
+            if not only_lock_resubmissions:
+                students_ids = list(get_students(course_id).keys())
+            else:
+                students_ids = [sub.user_id for sub in self.submissions]
         else:
             students_ids = get_students_ids_by_name(course_id, students_names)
 
@@ -110,7 +108,8 @@ class Assignment(object):
                 self.name,
                 students_names
                 if students_names is not None
-                else "all students that submitted the assignment.",
+                else "all students" +
+                     (" that submitted the exercise" if only_lock_resubmissions else ""),
             )
 
     def unlock_submissions(self, course_id, students_names=None):
