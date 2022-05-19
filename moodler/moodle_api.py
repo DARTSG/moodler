@@ -72,8 +72,15 @@ def call_moodle_api(moodle_function, **kwargs):
     """
     url = build_url(moodle_function, **kwargs)
 
-    response = requests.get(url).json()
+    response = requests.get(url)
 
-    validate_response(moodle_function, response)
+    try:
+        response_json = response.json()
+    except ValueError as e:
+        raise ValueError(
+            f"Failed calling api to url ({url}) with status code {response.status_code}\nMake sure the URL is correct"
+        ) from e
 
-    return response
+    validate_response(moodle_function, response_json)
+
+    return response_json
