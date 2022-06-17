@@ -190,7 +190,7 @@ def confirm_grading_with_uploaded_worksheet(
     }
     response = session.post(URL + "/mod/assign/view.php", data=data)
     result_page_content = response.text
-    success_match = re.search(r"Updated (<strong>)?(\d+)(</strong>)? grades and (<strong>)?(\d+)(</strong>)? feedback instances", result_page_content)
+    success_match = re.search(r"Updated (\d+) grades and feedback", result_page_content)
     if success_match is None:
         raise UploadException(
             "Failed to upload grading worksheet for assignment {} (ID: {})".format(
@@ -198,7 +198,7 @@ def confirm_grading_with_uploaded_worksheet(
             )
         )
 
-    updated_submissions_count = int(int(success_match.group(2)) / 2)
+    updated_submissions_count = int(int(success_match.group(1)) / 2)
     return updated_submissions_count
 
 
