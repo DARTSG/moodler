@@ -54,21 +54,3 @@ def mod_glossary_get_glossaries_by_courses(courseid: int) -> Dict[str, List]:
         )
 
     return response
-
-
-def mod_glossary_add_entry(
-    glossary_id: int, concept: str, definition: str, definitionformat: int
-) -> Dict[str, Union[int, List, str]]:
-    """
-    Returns a dictionary of information of the new entry e.g. entryid, warnings, item, itemid
-    definition format (1 = HTML, 0 = MOODLE, 2 = PLAIN or 4 = MARKDOWN)
-    """
-    entry = call_moodle_api(
-        "mod_glossary_add_entry",
-        glossaryid=glossary_id,
-        concept=concept,
-        definition=definition,
-        definitionformat=definitionformat,
-    )
-
-    return entry
