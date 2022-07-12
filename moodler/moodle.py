@@ -174,9 +174,9 @@ def _export_assignment(assignment: Assignment, folder: Path):
     assign_folder.mkdir(parents=True, exist_ok=True)
 
     if len(assignment.description) > 0:
-        description_file = assign_folder / safe_path(assignment.name).with_suffix(
-            ".txt"
-        )
+        description_file = assign_folder / safe_path(
+            assignment.name
+        ).with_suffix(".txt")
         description_file.write_text(assignment.description)
     for attachment in assignment.attachments:
         download_file(attachment, assign_folder)
