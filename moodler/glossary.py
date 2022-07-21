@@ -1,6 +1,6 @@
 from typing import List, Dict, Union
-from moodle_api import call_moodle_api
-from moodle_exception import MoodlerException
+from moodler.moodle_api import call_moodle_api
+from moodler.moodle_exception import MoodlerException
 
 
 class GlossaryException(MoodlerException):
