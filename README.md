@@ -16,8 +16,28 @@ Works and tested with python 3.7.7
 
 ## Setup
 
+### Setup Moodle
+
+To use, you need to create a web service user and enroll it in the module
+Follow the instructions at http://<MOODLE IP>/admin/category.php?category=webservicesettings
+
+Add the following functions:
+    mod_feedback_get_analysis
+    mod_feedback_get_feedbacks_by_courses
+    mod_assign_get_grades
+    mod_assign_get_submissions
+    mod_assign_get_assignments
+    core_enrol_get_enrolled_users
+    core_course_get_courses
+    mod_glossary_get_glossaries_by_courses
+    mod_glossary_get_entries_by_search
+
+The moodle API documentation can be found at http://192.168.10.158/admin/webservice/documentation.php
+
+### Setup repo
+
 1. Install the requirements file `pip install -r requirements.txt`
-2. Create you .env file (see example in the file `env_example`)
+2. Create you .env file (see example in the file `dotenv_example`)
 3. Extract the token for the .env file from this URL: `http://moodleip/admin/settings.php?section=webservicetokens`
 4. Enroll the `moodle` user the the relevant course.
 
