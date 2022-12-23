@@ -1,10 +1,10 @@
+import csv
 import logging
 import os
-import csv
 from typing import Sequence
 
-from moodler.moodle_exception import MoodlerException
 from moodler.config import STUDENTS_TO_IGNORE
+from moodler.moodle_exception import MoodlerException
 
 logger = logging.getLogger(__name__)
 

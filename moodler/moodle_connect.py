@@ -9,12 +9,13 @@ So this file is meant only for containing the login logics. It will calculate
 and connect to the moodle to create a session cookie that will be used to run
 API directly from the web interface.
 """
-import re
 import logging
+import re
+
 import requests
 
+from moodler.config import LOGIN_PAGE, URL
 from moodler.moodle_exception import MoodlerException
-from moodler.config import URL, LOGIN_PAGE
 
 logger = logging.getLogger(__name__)
 

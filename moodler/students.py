@@ -1,9 +1,10 @@
-import requests
 import logging
 
-from moodler.moodle_exception import MoodlerException
+import requests
+
 from moodler.consts import REQUEST_FORMAT
 from moodler.moodle_api import call_moodle_api, validate_response
+from moodler.moodle_exception import MoodlerException
 
 logger = logging.getLogger(__name__)
 

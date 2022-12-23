@@ -1,18 +1,10 @@
 import logging
 
 from moodler.config import URL
-from moodler.moodle_exception import MoodlerException
 from moodler.moodle_api import call_moodle_api
-from moodler.students import (
-    get_user_name,
-    get_students_ids_by_name,
-    get_students,
-)
-from moodler.submission import (
-    Submission,
-    mod_assign_get_submissions,
-    MissingGrade,
-)
+from moodler.moodle_exception import MoodlerException
+from moodler.students import get_students, get_students_ids_by_name, get_user_name
+from moodler.submission import MissingGrade, Submission, mod_assign_get_submissions
 
 logger = logging.getLogger(__name__)
 

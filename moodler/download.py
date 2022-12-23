@@ -1,11 +1,11 @@
 import logging
 import re
-from pathlib import Path
-import urllib.request
 import urllib.parse
+import urllib.request
+from pathlib import Path
 
-from moodler.moodle_exception import MoodlerException
 from moodler.config import TOKEN, URL
+from moodler.moodle_exception import MoodlerException
 
 logger = logging.getLogger(__name__)
 

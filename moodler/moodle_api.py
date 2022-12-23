@@ -1,12 +1,12 @@
 """
 This file should contain general logic for every Moodle API call.
 """
-import requests
 import logging
 
-from moodler.moodle_exception import MoodlerException
-from moodler.consts import REQUEST_FORMAT
+import requests
 
+from moodler.consts import REQUEST_FORMAT
+from moodler.moodle_exception import MoodlerException
 
 logger = logging.getLogger(__name__)
 

@@ -1,15 +1,14 @@
-import re
 import logging
 import os
+import re
+from enum import Enum
+from typing import Tuple
+
 import requests
 
-from enum import Enum
-
-from typing import Tuple
 from moodler.assignment import Assignment
-
-from moodler.moodle_exception import MoodlerException
 from moodler.config import URL
+from moodler.moodle_exception import MoodlerException
 
 logger = logging.getLogger(__name__)
 

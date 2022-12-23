@@ -1,14 +1,15 @@
 import argparse
 import logging
-from pprint import pprint
-from tabulate import tabulate
 from pathlib import Path
+from pprint import pprint
+
+from tabulate import tabulate
 
 from moodler.moodle import (
     export_all,
     export_feedbacks,
-    submissions_statistics,
     status_report,
+    submissions_statistics,
 )
 from moodler.students import get_students
 

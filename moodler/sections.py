@@ -1,7 +1,8 @@
 import logging
 from collections import defaultdict
+from typing import Iterable, NamedTuple, Optional
+
 from parse import parse
-from typing import NamedTuple, Iterable, Optional
 
 from moodler.assignment import get_assignments
 from moodler.moodle_api import call_moodle_api

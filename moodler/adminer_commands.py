@@ -4,9 +4,8 @@ interface in the Moodle UI.
 """
 import re
 
-from moodler.moodle_exception import MoodlerException
 from moodler.config import URL
-
+from moodler.moodle_exception import MoodlerException
 
 DB_UPDATE_SQL_COMMAND = r"""
 DELIMITER //
