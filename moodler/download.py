@@ -20,9 +20,7 @@ REPORT_TICK_ITEM_PATTERN = (
     r'<label>\s+<input type="hidden" name="itemids\[('
     r'\d+)\]".*?>\s+([\[\]0-9\-_\w ]+)\s+</label>'
 )
-REPORT_DOWNLOAD_SESSKEY_PATTERN = (
-    r'<input name="sesskey" type="hidden" ' r'value="([\w\d]+)"'
-)
+REPORT_DOWNLOAD_SESSKEY_PATTERN = r'<input name="sesskey" type="hidden" ' r'value="([\w\d]+)"'
 INVALID_REPORT_DOWNLOAD_PATTERN = "<b>Warning</b>"
 REPORT_OPTIONS_TO_IGNORE = ["Course total", "Deletion in progress"]
 REPORT_DIGITS_AFTER_DECIMAL_POINT = 2
@@ -52,33 +50,23 @@ def download_file(url, folder):
     parsed_url = urllib.parse.urlparse(url)
     query_parameters = dict(urllib.parse.parse_qsl(parsed_url.query))
     query_parameters.update({"token": TOKEN})
-    parsed_url = parsed_url._replace(
-        query=urllib.parse.urlencode(query_parameters)
-    )
+    parsed_url = parsed_url._replace(query=urllib.parse.urlencode(query_parameters))
 
-    urllib.request.urlretrieve(
-        urllib.parse.urlunparse(parsed_url), file_path.as_posix()
-    )
+    urllib.request.urlretrieve(urllib.parse.urlunparse(parsed_url), file_path.as_posix())
 
 
-def generate_assignment_folder_path(
-    assignment_name, username, download_folder, priority=None
-):
+def generate_assignment_folder_path(assignment_name, username, download_folder, priority=None):
     # Prepare name for assignment folder
     assignment_folder_name = assignment_name
     if priority:
         assignment_folder_name = str(priority) + "--" + assignment_name
 
     # Create sub-folder for assignment
-    submission_folder = (
-        Path(download_folder) / Path(assignment_folder_name) / Path(username)
-    )
+    submission_folder = Path(download_folder) / Path(assignment_folder_name) / Path(username)
     return submission_folder
 
 
-def download_submission(
-    assignment_name, username, submission, download_folder, priority=None
-):
+def download_submission(assignment_name, username, submission, download_folder, priority=None):
     """
     Download the given submission, while creating the appropriate subfolders
     """
@@ -94,9 +82,7 @@ def download_submission(
         download_file(sf.url, submission_folder)
 
 
-def download_all_submissions(
-    assignment_id, assignment_name, output_path, session
-):
+def download_all_submissions(assignment_id, assignment_name, output_path, session):
     """
     Download all submissions ZIP from the Moodle using the session created.
     :param assignment_id: The ID of the submission to download.
@@ -127,9 +113,7 @@ def download_all_submissions(
     return all_submissions_file_name
 
 
-def download_grading_worksheet(
-    assignment_id, assignment_name, output_path, session
-):
+def download_grading_worksheet(assignment_id, assignment_name, output_path, session):
     """
     Download the grading sheet from the Moodle using the session created.
 
@@ -152,9 +136,7 @@ def download_grading_worksheet(
         response = session.get(URL + "/mod/assign/view.php", params=params)
     except ConnectionError as exc:
         logger.exception(exc)
-        raise DownloadException(
-            f'Failed to download grading worksheet for "{assignment_name}"'
-        )
+        raise DownloadException(f'Failed to download grading worksheet for "{assignment_name}"')
 
     grading_worksheet_file_name = Path(output_path) / Path(
         assignment_name + ASSIGNMENT_WORKSHEET_EXT
@@ -183,24 +165,19 @@ def download_course_grades_report(
     download the file.
     """
     params = {"id": course_id}
-    report_download_page_response = session.get(
-        URL + "/grade/export/txt/index.php", params=params
-    )
+    report_download_page_response = session.get(URL + "/grade/export/txt/index.php", params=params)
 
     # Decoding and retrieving the content of the download page
     download_page_content = report_download_page_response.content.decode()
 
     # Locate the sesskey required for downloading the report
-    sesskey_match = re.search(
-        REPORT_DOWNLOAD_SESSKEY_PATTERN, download_page_content
-    )
+    sesskey_match = re.search(REPORT_DOWNLOAD_SESSKEY_PATTERN, download_page_content)
 
     # Validating that the sesskey required for the report download has been
     # found
     if sesskey_match is None:
         raise InvalidReportDownloadPage(
-            "The sesskey required to download the "
-            "report from the moodle was not found."
+            "The sesskey required to download the " "report from the moodle was not found."
         )
 
     # Locating all the ticks option required to select all exercises in the
@@ -257,9 +234,7 @@ def download_course_grades_report(
     body_params["submitbutton"] = "Download"
 
     # Executing the POST request.
-    report_download_response = session.post(
-        URL + "/grade/export/txt/export.php", data=body_params
-    )
+    report_download_response = session.post(URL + "/grade/export/txt/export.php", data=body_params)
 
     report_content = report_download_response.content
 
@@ -271,9 +246,7 @@ def download_course_grades_report(
             "POST request."
         )
 
-    report_file_name = Path(output_path) / Path(
-        REPORT_FILE_NAME_FORMAT.format(course_name)
-    )
+    report_file_name = Path(output_path) / Path(REPORT_FILE_NAME_FORMAT.format(course_name))
 
     with report_file_name.open(mode="wb") as report_file:
         report_file.write(report_content)

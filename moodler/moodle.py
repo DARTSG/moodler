@@ -110,9 +110,7 @@ def submissions_statistics(course_id, is_verbose=False, download_folder=None):
                 ungraded_ignored,
             )
 
-        amount_ungraded_not_ignored = current_assignment_ungraded_amount - len(
-            ungraded_ignored
-        )
+        amount_ungraded_not_ignored = current_assignment_ungraded_amount - len(ungraded_ignored)
         if amount_ungraded_not_ignored != 0:
             logger.info(
                 "Total ungraded for assignment [%s] (CMID %s, ID %s): %s/%s",
@@ -174,9 +172,7 @@ def _export_assignment(assignment: Assignment, folder: Path):
     assign_folder.mkdir(parents=True, exist_ok=True)
 
     if len(assignment.description) > 0:
-        description_file = assign_folder / safe_path(
-            assignment.name
-        ).with_suffix(".txt")
+        description_file = assign_folder / safe_path(assignment.name).with_suffix(".txt")
         description_file.write_text(assignment.description)
     for attachment in assignment.attachments:
         download_file(attachment, assign_folder)
@@ -292,19 +288,14 @@ def status_report(course_id):
     users_map = get_students(course_id)
 
     submissions_by_user = Counter()
-    last_submission_by_user = defaultdict(
-        lambda: SubmissionTuple(name="Nothing", timestamp=0)
-    )
+    last_submission_by_user = defaultdict(lambda: SubmissionTuple(name="Nothing", timestamp=0))
 
     for assignment in assignments:
         for submission in assignment.submissions:
             user_name = users_map[submission.user_id]
             submissions_by_user[user_name] += 1
 
-            if (
-                last_submission_by_user[user_name].timestamp
-                < submission.timestamp
-            ):
+            if last_submission_by_user[user_name].timestamp < submission.timestamp:
                 last_submission_by_user[user_name] = SubmissionTuple(
                     name=assignment.name, timestamp=submission.timestamp
                 )
@@ -312,9 +303,7 @@ def status_report(course_id):
     student_statuses = []
     for user, submission_count in submissions_by_user.items():
         student_statuses.append(
-            StudentStatus(
-                user, submission_count, last_submission_by_user[user].name
-            )
+            StudentStatus(user, submission_count, last_submission_by_user[user].name)
         )
 
     student_statuses = sorted(
