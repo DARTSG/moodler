@@ -29,7 +29,7 @@ class Assignment(object):
         self.cmid = assignment_json["cmid"]
         self.name = assignment_json["name"]
         self.description = assignment_json.get("intro", "")
-        self.attachments = [
+        self.attachments: list[str] = [
             attachment["fileurl"]
             for attachment in assignment_json.get("introattachments", [])
         ]
@@ -177,7 +177,9 @@ def mod_assign_get_assignments(course_id):
     return response["courses"][0]["assignments"]
 
 
-def get_assignments_by_field(course_id, field=None, assignments_fields=None):
+def get_assignments_by_field(
+    course_id, field=None, assignments_fields=None
+) -> list[Assignment] | None:
     """
     Retrieves assignments, grades, and submissions from server and parses into
     corresponding objects. This is a generic function to retrieve assignments
@@ -197,7 +199,7 @@ def get_assignments_by_field(course_id, field=None, assignments_fields=None):
 
     if not assignment_ids:
         logger.warning("No assignments were detected for course %s", course_id)
-        return assignment_ids
+        return None
 
     grades = mod_assign_get_grades(assignment_ids)
     submissions = mod_assign_get_submissions(assignment_ids)
@@ -231,7 +233,7 @@ def get_assignments_by_field(course_id, field=None, assignments_fields=None):
     return assignments
 
 
-def get_assignments(course_id, assignment_ids_to_get=None):
+def get_assignments(course_id, assignment_ids_to_get=None) -> list[Assignment] | None:
     """
     Retrieves assignments, grades, and submissions from server and parses into corresponding objects.
 
@@ -239,11 +241,9 @@ def get_assignments(course_id, assignment_ids_to_get=None):
     :param assignment_ids_to_get: Specific assignment IDs to retrieve.
     :return: List of Assignment() objects
     """
-    assignments = get_assignments_by_field(
+    return get_assignments_by_field(
         course_id, assignments_fields=assignment_ids_to_get, field="cmid"
     )
-
-    return assignments
 
 
 def get_assignments_by_names(course_id, assignment_names_to_get=None):
@@ -261,14 +261,14 @@ def get_assignments_by_names(course_id, assignment_names_to_get=None):
     return assignments
 
 
-def get_assignment_files(course_id, assignment_id):
+def get_assignment_files(course_id, assignment_id) -> list[str]:
     """
     Returns a list of all the file URLs for the assignment received.
     :param course_id: The ID of the course to which the assignment belongs.
     :param assignment_id: The ID of the assignment to retrieve its files.
     :return: List of all the files related to this assignment.
     """
-    assignment_files = []
+    assignment_files: list[str] = []
 
     # Retrieve only the files for this specific assignment ID
     assignment = get_assignments(course_id, [assignment_id])
