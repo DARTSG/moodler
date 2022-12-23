@@ -1,7 +1,0 @@
-requests
-environs==8.0.0
-parse==1.16.0
-flake8
-black
-isort
-tabulate
