@@ -1,11 +1,11 @@
 import logging
 import re
-from pathlib import Path
-import urllib.request
 import urllib.parse
+import urllib.request
+from pathlib import Path
 
-from moodler.moodle_exception import MoodlerException
 from moodler.config import TOKEN, URL
+from moodler.moodle_exception import MoodlerException
 
 logger = logging.getLogger(__name__)
 
@@ -52,9 +52,7 @@ def download_file(url, folder):
     parsed_url = urllib.parse.urlparse(url)
     query_parameters = dict(urllib.parse.parse_qsl(parsed_url.query))
     query_parameters.update({"token": TOKEN})
-    parsed_url = parsed_url._replace(
-        query=urllib.parse.urlencode(query_parameters)
-    )
+    parsed_url = parsed_url._replace(query=urllib.parse.urlencode(query_parameters))
 
     urllib.request.urlretrieve(
         urllib.parse.urlunparse(parsed_url), file_path.as_posix()
@@ -94,9 +92,7 @@ def download_submission(
         download_file(sf.url, submission_folder)
 
 
-def download_all_submissions(
-    assignment_id, assignment_name, output_path, session
-):
+def download_all_submissions(assignment_id, assignment_name, output_path, session):
     """
     Download all submissions ZIP from the Moodle using the session created.
     :param assignment_id: The ID of the submission to download.
@@ -127,9 +123,7 @@ def download_all_submissions(
     return all_submissions_file_name
 
 
-def download_grading_worksheet(
-    assignment_id, assignment_name, output_path, session
-):
+def download_grading_worksheet(assignment_id, assignment_name, output_path, session):
     """
     Download the grading sheet from the Moodle using the session created.
 
@@ -191,9 +185,7 @@ def download_course_grades_report(
     download_page_content = report_download_page_response.content.decode()
 
     # Locate the sesskey required for downloading the report
-    sesskey_match = re.search(
-        REPORT_DOWNLOAD_SESSKEY_PATTERN, download_page_content
-    )
+    sesskey_match = re.search(REPORT_DOWNLOAD_SESSKEY_PATTERN, download_page_content)
 
     # Validating that the sesskey required for the report download has been
     # found

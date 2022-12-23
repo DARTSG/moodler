@@ -1,9 +1,10 @@
-import requests
 import logging
 
-from moodler.moodle_exception import MoodlerException
+import requests
+
 from moodler.consts import REQUEST_FORMAT
 from moodler.moodle_api import call_moodle_api, validate_response
+from moodler.moodle_exception import MoodlerException
 
 logger = logging.getLogger(__name__)
 
@@ -105,7 +106,9 @@ def list_students():
 
 
 def get_user_name(user_id):
-    response = call_moodle_api("core_user_get_users_by_field", field="id", values=[user_id])
+    response = call_moodle_api(
+        "core_user_get_users_by_field", field="id", values=[user_id]
+    )
 
     response_json = response[0]
 

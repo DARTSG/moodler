@@ -1,22 +1,22 @@
-import logging
-from moodler.utilities import safe_path
-from typing import NamedTuple
-from pathlib import Path
 import csv
+import logging
 from collections import Counter, defaultdict
+from pathlib import Path
+from typing import NamedTuple
 
 from moodler.assignment import Assignment, get_assignments
-from moodler.config import STUDENTS_TO_IGNORE, MOODLE_USERNAME, MOODLE_PASSWORD
+from moodler.config import MOODLE_PASSWORD, MOODLE_USERNAME, STUDENTS_TO_IGNORE
 from moodler.download import (
+    DownloadException,
+    download_course_grades_report,
     download_file,
     download_submission,
-    download_course_grades_report,
-    DownloadException,
 )
-from moodler.moodle_connect import connect_to_server
 from moodler.feedbacks import feedbacks
-from moodler.students import get_students
+from moodler.moodle_connect import connect_to_server
 from moodler.sections import core_course_get_contents, get_course_by_id
+from moodler.students import get_students
+from moodler.utilities import safe_path
 
 logger = logging.getLogger(__name__)
 
@@ -174,9 +174,9 @@ def _export_assignment(assignment: Assignment, folder: Path):
     assign_folder.mkdir(parents=True, exist_ok=True)
 
     if len(assignment.description) > 0:
-        description_file = assign_folder / safe_path(
-            assignment.name
-        ).with_suffix(".txt")
+        description_file = assign_folder / safe_path(assignment.name).with_suffix(
+            ".txt"
+        )
         description_file.write_text(assignment.description)
     for attachment in assignment.attachments:
         download_file(attachment, assign_folder)
@@ -301,10 +301,7 @@ def status_report(course_id):
             user_name = users_map[submission.user_id]
             submissions_by_user[user_name] += 1
 
-            if (
-                last_submission_by_user[user_name].timestamp
-                < submission.timestamp
-            ):
+            if last_submission_by_user[user_name].timestamp < submission.timestamp:
                 last_submission_by_user[user_name] = SubmissionTuple(
                     name=assignment.name, timestamp=submission.timestamp
                 )
@@ -312,9 +309,7 @@ def status_report(course_id):
     student_statuses = []
     for user, submission_count in submissions_by_user.items():
         student_statuses.append(
-            StudentStatus(
-                user, submission_count, last_submission_by_user[user].name
-            )
+            StudentStatus(user, submission_count, last_submission_by_user[user].name)
         )
 
     student_statuses = sorted(

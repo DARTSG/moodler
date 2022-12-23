@@ -1,7 +1,8 @@
 import logging
 from collections import defaultdict
+from typing import Iterable, NamedTuple, Optional
+
 from parse import parse
-from typing import NamedTuple, Iterable, Optional
 
 from moodler.assignment import get_assignments
 from moodler.moodle_api import call_moodle_api
@@ -41,9 +42,9 @@ def list_courses(course_prefix: str = "") -> Iterable[Course]:
 
     for course in courses_from_moodle:
         full_name = course["fullname"]
-        if not course["shortname"].startswith(course_prefix) and not full_name.startswith(
+        if not course["shortname"].startswith(
             course_prefix
-        ):
+        ) and not full_name.startswith(course_prefix):
             continue
 
         course_name = full_name
@@ -71,13 +72,17 @@ def get_assignments_by_section(course_id, sections_names=None, assignments_names
 
     if sections_names is not None:
         # Filter out section names
-        sections = [section for section in sections if section["name"] in sections_names]
+        sections = [
+            section for section in sections if section["name"] in sections_names
+        ]
 
         found_sections = set(section["name"] for section in sections)
         missing_sections = set(sections_names).difference(found_sections)
 
         if missing_sections:
-            logger.error("Could not find the following sections: %s", list(missing_sections))
+            logger.error(
+                "Could not find the following sections: %s", list(missing_sections)
+            )
 
     if assignments_names is not None:
         # Handle missing assignments
@@ -87,7 +92,9 @@ def get_assignments_by_section(course_id, sections_names=None, assignments_names
 
         missing_assignments = set(assignments_names).difference(found_assignments)
         if missing_assignments:
-            logger.error("Could not find the following assignments: %s", missing_assignments)
+            logger.error(
+                "Could not find the following assignments: %s", missing_assignments
+            )
 
     assignment_id_to_section = {}
 

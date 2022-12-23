@@ -1,18 +1,10 @@
 import logging
 
 from moodler.config import URL
-from moodler.moodle_exception import MoodlerException
 from moodler.moodle_api import call_moodle_api
-from moodler.students import (
-    get_user_name,
-    get_students_ids_by_name,
-    get_students,
-)
-from moodler.submission import (
-    Submission,
-    mod_assign_get_submissions,
-    MissingGrade,
-)
+from moodler.moodle_exception import MoodlerException
+from moodler.students import get_students, get_students_ids_by_name, get_user_name
+from moodler.submission import MissingGrade, Submission, mod_assign_get_submissions
 
 logger = logging.getLogger(__name__)
 
@@ -52,9 +44,7 @@ class Assignment(object):
                     break
             if "new" != submission["status"]:
                 try:
-                    self.submissions.append(
-                        Submission(user_id, grade_json, submission)
-                    )
+                    self.submissions.append(Submission(user_id, grade_json, submission))
                 except MissingGrade:
                     logger.warning(
                         'Missing grade for student "{}" in assignment "{}". Fix ASAP at {}'.format(
@@ -65,9 +55,7 @@ class Assignment(object):
                             ),
                         )
                     )
-                    self.submissions.append(
-                        Submission(user_id, None, submission)
-                    )
+                    self.submissions.append(Submission(user_id, None, submission))
 
         self._assignment_json = assignment_json
         self._submissions_json = submissions_json
@@ -86,7 +74,9 @@ class Assignment(object):
             self.uid, self.name, len(self.submissions)
         )
 
-    def lock_submissions(self, course_id, students_names=None, only_lock_resubmissions=True):
+    def lock_submissions(
+        self, course_id, students_names=None, only_lock_resubmissions=True
+    ):
         """
         Locking submissions for this specific assignment.
         """
@@ -109,8 +99,8 @@ class Assignment(object):
                 self.name,
                 students_names
                 if students_names is not None
-                else "all students" +
-                     (" that submitted the exercise" if only_lock_resubmissions else ""),
+                else "all students"
+                + (" that submitted the exercise" if only_lock_resubmissions else ""),
             )
 
     def unlock_submissions(self, course_id, students_names=None):
@@ -130,9 +120,7 @@ class Assignment(object):
             logger.info(
                 "Unlocked submissions for assignment '%s' for %s",
                 self.name,
-                students_names
-                if students_names is not None
-                else "all students.",
+                students_names if students_names is not None else "all students.",
             )
 
 
@@ -162,9 +150,7 @@ def mod_assign_get_grades(assignment_ids):
     """
     Returns the grades for all the assignments
     """
-    response = call_moodle_api(
-        "mod_assign_get_grades", assignmentids=assignment_ids
-    )
+    response = call_moodle_api("mod_assign_get_grades", assignmentids=assignment_ids)
 
     grades = {}
     for grds in response["assignments"]:
@@ -178,9 +164,7 @@ def mod_assign_get_assignments(course_id):
     Returns a dictionary mapping assignment id to its name from a specified
     course
     """
-    response = call_moodle_api(
-        "mod_assign_get_assignments", courseids=[course_id]
-    )
+    response = call_moodle_api("mod_assign_get_assignments", courseids=[course_id])
 
     if not response["courses"]:
         raise EmptyCourseError(
