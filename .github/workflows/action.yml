@@ -32,10 +32,10 @@ jobs:
           poetry install
       - name: isort
         run: |
-          isort --check moodler/ main.py
+          poetry run isort --check moodler/ main.py
       - name: Black
         run: |
-          black --check moodler/ main.py
+          poetry run black --check moodler/ main.py
       - name: flake8
         run: |
-          flake8 moodler/ main.py
+          poetry run flake8 moodler/ main.py
