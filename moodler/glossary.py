@@ -24,7 +24,9 @@ def mod_glossary_get_entries_by_search(
     :param glossary_id: The ID of the glossary, which could be obtained using mod_glossary_get_glossaries_by_courses function
     :param query: The string to search within the given glossary
     """
-    response = call_moodle_api("mod_glossary_get_entries_by_search", id=glossary_id, query=query)
+    response = call_moodle_api(
+        "mod_glossary_get_entries_by_search", id=glossary_id, query=query
+    )
 
     if response["count"] == 0:
         raise NoGlossaryEntry(
@@ -43,9 +45,13 @@ def mod_glossary_get_glossaries_by_courses(courseid: int) -> Dict[str, List]:
     mapping glossary id to glossary
     e.g. [{id: 1, 'name': 'Test Files', ...}]
     """
-    response = call_moodle_api("mod_glossary_get_glossaries_by_courses", courseids=[courseid])
+    response = call_moodle_api(
+        "mod_glossary_get_glossaries_by_courses", courseids=[courseid]
+    )
 
     if not response["glossaries"]:
-        raise NoCourseGlossary("""There are no glossaries for this course.\n{}""".format(response))
+        raise NoCourseGlossary(
+            """There are no glossaries for this course.\n{}""".format(response)
+        )
 
     return response

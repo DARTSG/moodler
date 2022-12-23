@@ -94,7 +94,9 @@ def handle_csv(csv_path):
     output_csv_path = csv_path.replace(".csv", "_processed.csv")
 
     try:
-        submissions_counter, resubmissions_counter = write_output_csv(output_csv_path, data)
+        submissions_counter, resubmissions_counter = write_output_csv(
+            output_csv_path, data
+        )
     except InvalidCsv as e:
         raise InvalidCsv(csv_path) from e
 
@@ -137,7 +139,9 @@ def write_output_csv(output_csv_path: str, data: Sequence[Sequence[str]]):
                 continue
 
             if should_skip_student(row[STUDENT_INDEX]):
-                logger.debug("Student %s made a submission, ignoring it...", row[STUDENT_INDEX])
+                logger.debug(
+                    "Student %s made a submission, ignoring it...", row[STUDENT_INDEX]
+                )
                 continue
 
             writer.writerow(row)

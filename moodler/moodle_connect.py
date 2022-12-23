@@ -52,7 +52,9 @@ def connect_to_server(username, password):
     login_page_response = session.get("{}/{}".format(URL, LOGIN_PAGE))
 
     # Looking for the login token within the login page using regex.
-    login_token_match = re.search(LOGIN_TOKEN_PATTERN, login_page_response.content.decode())
+    login_token_match = re.search(
+        LOGIN_TOKEN_PATTERN, login_page_response.content.decode()
+    )
     if login_token_match is None:
         raise LoginTokenNotFound(
             "The login token required for authentication "
@@ -78,11 +80,15 @@ def connect_to_server(username, password):
     login_post_response = session.post("{}/{}".format(URL, LOGIN_PAGE), data=params)
 
     # Check if the login has failed due to invalid credentials
-    failed_login_match = re.search(FAILED_LOGIN_PATTERN, login_post_response.content.decode())
+    failed_login_match = re.search(
+        FAILED_LOGIN_PATTERN, login_post_response.content.decode()
+    )
     # If the search has succeeded and in the response we have found an
     # indicator for failed login, then we should raise an exception.
     if failed_login_match is not None:
-        raise InvalidUsernameOrPassword("The username / password you have " "used are invalid")
+        raise InvalidUsernameOrPassword(
+            "The username / password you have " "used are invalid"
+        )
 
     logger.info("Successfully created a new session with the Moodle server")
 

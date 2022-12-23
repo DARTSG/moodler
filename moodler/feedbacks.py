@@ -26,7 +26,9 @@ def mod_feedback_get_feedbacks_by_courses(course_id):
     """
     Retrieves all feedbacks for a given course
     """
-    response = call_moodle_api("mod_feedback_get_feedbacks_by_courses", courseids=[course_id])
+    response = call_moodle_api(
+        "mod_feedback_get_feedbacks_by_courses", courseids=[course_id]
+    )
 
     return response["feedbacks"]
 

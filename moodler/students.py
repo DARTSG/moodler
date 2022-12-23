@@ -106,7 +106,9 @@ def list_students():
 
 
 def get_user_name(user_id):
-    response = call_moodle_api("core_user_get_users_by_field", field="id", values=[user_id])
+    response = call_moodle_api(
+        "core_user_get_users_by_field", field="id", values=[user_id]
+    )
 
     response_json = response[0]
 

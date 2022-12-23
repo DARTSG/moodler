@@ -30,7 +30,8 @@ class Assignment(object):
         self.name = assignment_json["name"]
         self.description = assignment_json.get("intro", "")
         self.attachments = [
-            attachment["fileurl"] for attachment in assignment_json.get("introattachments", [])
+            attachment["fileurl"]
+            for attachment in assignment_json.get("introattachments", [])
         ]
 
         self.submissions = []
@@ -73,7 +74,9 @@ class Assignment(object):
             self.uid, self.name, len(self.submissions)
         )
 
-    def lock_submissions(self, course_id, students_names=None, only_lock_resubmissions=True):
+    def lock_submissions(
+        self, course_id, students_names=None, only_lock_resubmissions=True
+    ):
         """
         Locking submissions for this specific assignment.
         """
