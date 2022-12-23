@@ -46,14 +46,24 @@ class GlossaryEntries(TypedDict):
     warnings: list[dict]
 
 
-def mod_glossary_get_entries_by_search(glossary_id: int, query: str) -> GlossaryEntries:
+def mod_glossary_get_entries_by_search(
+    glossary_id: int, query: str, _from: int = 0, limit: int = 1000
+) -> GlossaryEntries:
     """
     Returns the list of entries containing the search term in query
     :param glossary_id: The ID of the glossary, which could be obtained using mod_glossary_get_glossaries_by_courses function
     :param query: The string to search within the given glossary
+    :param _from: The offset of the first entry to return
+    :param limit: The maximum number of entries to return
     """
+    # This is needed because "from" is a reserved python keyword
+    kwargs = {
+        "from": _from,
+        "limit": limit,
+    }
+
     response: GlossaryEntries = call_moodle_api(
-        "mod_glossary_get_entries_by_search", id=glossary_id, query=query
+        "mod_glossary_get_entries_by_search", id=glossary_id, query=query, **kwargs
     )
 
     if response["count"] == 0:
@@ -65,6 +75,28 @@ def mod_glossary_get_entries_by_search(glossary_id: int, query: str) -> Glossary
         )
 
     return response
+
+
+def get_all_glossary_entries(glossary_id: int, query: str) -> list[GlossaryEntry]:
+    """
+    Returns the list of entries containing the search term in query
+    :param glossary_id: The ID of the glossary, which could be obtained using mod_glossary_get_glossaries_by_courses function
+    :param query: The string to search within the given glossary
+    """
+    entries: list[GlossaryEntry] = []
+
+    # Get all entries in a loop
+    while True:
+        response: GlossaryEntries = mod_glossary_get_entries_by_search(
+            glossary_id, query, _from=len(entries)
+        )
+
+        entries.extend(response["entries"])
+
+        if len(entries) >= response["count"]:
+            break
+
+    return entries
 
 
 class Glossary(TypedDict):
