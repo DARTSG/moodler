@@ -77,7 +77,7 @@ def mod_glossary_get_entries_by_search(
     return response
 
 
-def get_all_glossary_entries(glossary_id: int, query: str) -> list[GlossaryEntry]:
+def get_all_glossary_entries(glossary_id: int, query: str = "") -> list[GlossaryEntry]:
     """
     Returns the list of entries containing the search term in query
     :param glossary_id: The ID of the glossary, which could be obtained using mod_glossary_get_glossaries_by_courses function

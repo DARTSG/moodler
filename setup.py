@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 NAME = "moodler"
-VERSION = "1.0.2"
+VERSION = "1.0.3"
 # To install the library, run the following
 #
 # python setup.py install
