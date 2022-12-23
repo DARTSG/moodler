@@ -72,7 +72,7 @@ def get_students(course_id):
     """
     Get only the students enrolled in a course
     """
-    output_enrolled_students = {}
+    output_enrolled_students: dict[int, str] = {}
 
     for enrolled in core_enrol_get_enrolled_users(course_id):
         if enrolled["roles"][0]["shortname"] != "student":

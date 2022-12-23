@@ -34,7 +34,7 @@ class Assignment(object):
             for attachment in assignment_json.get("introattachments", [])
         ]
 
-        self.submissions = []
+        self.submissions: list[Submission] = []
         for submission in submissions_json:
             grade_json = None
             user_id = submission["userid"]
@@ -62,7 +62,7 @@ class Assignment(object):
         self._grades_json = grades_json
 
     def ungraded(self):
-        submissions = []
+        submissions: list[Submission] = []
         for submission in self.submissions:
             # Process ungraded submission
             if submission.needs_grading():
@@ -201,7 +201,7 @@ def get_assignments_by_field(course_id, field=None, assignments_fields=None):
 
     grades = mod_assign_get_grades(assignment_ids)
     submissions = mod_assign_get_submissions(assignment_ids)
-    assignments = []
+    assignments: list[Assignment] = []
 
     if assignments_fields:
         assignments_not_found = assignments_fields[:]
