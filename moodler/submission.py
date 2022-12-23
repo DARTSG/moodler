@@ -1,5 +1,3 @@
-import requests
-
 from moodler.moodle_api import call_moodle_api
 from moodler.moodle_exception import MoodlerException
 

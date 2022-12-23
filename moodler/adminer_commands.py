@@ -15,45 +15,45 @@ DROP PROCEDURE IF EXISTS Update_feedback;
 CREATE PROCEDURE Update_feedback()
 BEGIN
 
-	DECLARE current_row INT;
-	SET current_row = 0;
-   
-	SET @i=0;
-   
-	CREATE TEMPORARY TABLE new_feedback
-	SELECT @i:=@i+1 As RowId, A.commenttext, D.feedback, D.itemid, D.userid
-	FROM mdl_assignfeedback_comments A
-	LEFT JOIN mdl_assign_grades B ON A.grade = B.id
-	LEFT JOIN mdl_grade_items C ON B.assignment = C.iteminstance
-	LEFT JOIN mdl_grade_grades D ON c.id= d.itemid AND B.userid = D.userid
-	WHERE A.commenttext <> '' AND A.commenttext IS NOT NULL 
-                                  AND A.commenttext <> '0' 
+    DECLARE current_row INT;
+    SET current_row = 0;
+
+    SET @i=0;
+
+    CREATE TEMPORARY TABLE new_feedback
+    SELECT @i:=@i+1 As RowId, A.commenttext, D.feedback, D.itemid, D.userid
+    FROM mdl_assignfeedback_comments A
+    LEFT JOIN mdl_assign_grades B ON A.grade = B.id
+    LEFT JOIN mdl_grade_items C ON B.assignment = C.iteminstance
+    LEFT JOIN mdl_grade_grades D ON c.id= d.itemid AND B.userid = D.userid
+    WHERE A.commenttext <> '' AND A.commenttext IS NOT NULL
+                                  AND A.commenttext <> '0'
                                   AND (A.commenttext <> D.feedback OR D.feedback IS NULL)
-                                  AND C.id= D.itemid 
+                                  AND C.id= D.itemid
                                   AND B.userid = D.userid;
 
 
 
-	SELECT MAX(RowId) INTO @max FROM new_feedback;
-   
-	label1: LOOP
+    SELECT MAX(RowId) INTO @max FROM new_feedback;
+
+    label1: LOOP
 
 
-		SELECT itemid, userid, commenttext
-		 INTO @assignment, @userid, @feedback
-		 FROM new_feedback
-		 WHERE RowId = current_row;
+        SELECT itemid, userid, commenttext
+         INTO @assignment, @userid, @feedback
+         FROM new_feedback
+         WHERE RowId = current_row;
 
-		UPDATE mdl_grade_grades
-		SET feedback = @feedback
-		WHERE itemid = @assignment AND userid = @userid;
-		 
-		SET current_row = current_row + 1;
-		IF current_row <= @max THEN
-			ITERATE label1;
-		END IF;
-		LEAVE label1;
-	END LOOP label1;
+        UPDATE mdl_grade_grades
+        SET feedback = @feedback
+        WHERE itemid = @assignment AND userid = @userid;
+
+        SET current_row = current_row + 1;
+        IF current_row <= @max THEN
+            ITERATE label1;
+        END IF;
+        LEAVE label1;
+    END LOOP label1;
 END; //
 DELIMITER ;
 
