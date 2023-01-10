@@ -29,14 +29,26 @@ Add the following functions:
     mod_assign_get_assignments
     core_enrol_get_enrolled_users
     core_course_get_courses
+    core_course_get_contents
     mod_glossary_get_glossaries_by_courses
     mod_glossary_get_entries_by_search
 
 The moodle API documentation can be found at http://192.168.10.158/admin/webservice/documentation.php
 
-### Setup repo
+## Setup
 
-1. Install the requirements file `pip install -r requirements.txt`
+1. The project uses [Poetry](https://python-poetry.org/) to manage dependencies and virtual environments.
+To install Poetry, follow the instructions on the [Poetry website](https://python-poetry.org/docs/#installation).
+
+The gist:
+
+```bash
+python3.10 -m venv venv
+source venv/bin/activate
+pip install -U pip poetry
+poetry install
+```
+
 2. Create you .env file (see example in the file `dotenv_example`)
 3. Extract the token for the .env file from this URL: `http://moodleip/admin/settings.php?section=webservicetokens`
 4. Enroll the `moodle` user the the relevant course.
@@ -74,4 +86,3 @@ List names of all students
 `http://<moodleip>/admin/webservice/documentation.php` - Documentation for all api functions
 
 `http://<moodleip>/admin/webservice/service_functions.php?id=4` - Allow the use of specific functions
-
