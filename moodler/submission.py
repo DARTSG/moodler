@@ -1,5 +1,12 @@
+from enum import Enum
+
 from moodler.moodle_api import call_moodle_api
 from moodler.moodle_exception import MoodlerException
+
+
+class SubmissionStatus(Enum):
+    NEW = "new"
+    SUBMITTED = "submitted"
 
 
 class MissingGrade(MoodlerException):
@@ -38,6 +45,7 @@ class Submission(object):
         else:
             self.grade = None
 
+        self.status = submission_json["status"]
         self.gradingstatus = submission_json["gradingstatus"]
         self.submission_files = []
         self.timestamp = submission_json["timemodified"]
@@ -55,20 +63,40 @@ class Submission(object):
     @property
     def resubmitted(self):
         # Returns true if the submission was edited after the last grading
-        return self.grade is not None and self.grade.timestamp < self.timestamp
+        return self.grade is not None and self.grade.timestamp <= self.timestamp
 
     def needs_grading(self):
         """
         Returns True if the submission needs grading.
         Does this by checking the grading status and the grading timestamp vs the last modification timestamp
+        # See https://github.com/moodle/moodle/blob/master/mod/assign/locallib.php#L2467
         """
-        return ("notgraded" == self.gradingstatus) or self.resubmitted
+        return all(
+            [
+                self.timestamp is not None,
+                self.status == SubmissionStatus.SUBMITTED,
+                any(
+                    [
+                        self.grade is None,
+                        self.resubmitted,
+                        self.grade is not None
+                        and (
+                            self.grade.timestamp is None
+                            or (self.grade.grade is not None and self.grade.grade < 0)
+                        ),
+                    ]
+                ),
+            ]
+        )
 
     def __repr__(self):
         return (
             "Submission(user_id={}, gradingstatus={}, grade={}, "
             "submitted={})".format(
-                self.user_id, self.gradingstatus, self.grade, len(self.submission_files)
+                self.user_id,
+                self.gradingstatus,
+                self.grade,
+                len(self.submission_files),
             )
         )
 
@@ -97,7 +125,9 @@ def mod_assign_get_submission_status(assignment_id, user_id=None):
     {id: [..]}
     """
     response = call_moodle_api(
-        "mod_assign_get_submission_status", assignid=assignment_id, userid=user_id
+        "mod_assign_get_submission_status",
+        assignid=assignment_id,
+        userid=user_id,
     )
 
     return response
