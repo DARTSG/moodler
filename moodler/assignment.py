@@ -1,4 +1,6 @@
 import logging
+from enum import Enum, IntEnum
+from typing import Optional, TypedDict
 
 from moodler.config import URL
 from moodler.moodle_api import call_moodle_api
@@ -19,6 +21,40 @@ class InvalidAssignmentID(AssignmentException):
 
 class EmptyCourseError(AssignmentException):
     pass
+
+
+class WorkflowState(Enum):
+    """
+    The next marking workflow state
+    One advantage of using marking workflow is that the grades can be hidden from students until
+    they are set to 'Released'.
+    See https://docs.moodle.org/401/en/Assignment_settings#Grade
+    """
+
+    NOT_MARKED = "notmarked"  # the marker has not yet started
+    IN_MARKING = "inmarking"  # the marker has started but not yet finished
+    MARKING_COMPLETED = "markingcompleted"  # the marker has finished but might need to go back for checking/corrections
+    IN_REVIEW = (
+        "inreview"  # the marking is now with the teacher in charge for quality checking
+    )
+    READY_FOR_RELEASE = "readyforrelease"  # the teacher in charge is satisfied with the marking but wait before giving students access to the marking
+    RELEASED = "released"  # the student can access the grades/feedback
+
+
+class CommentFormat(IntEnum):
+    MOODLE = 0
+    HTML = 1
+    PLAIN = 2
+    MARKDOWN = 4
+
+
+class GradeParams(TypedDict):
+    user_id: int
+    grade: float
+    addattempt: Optional[int]
+    workflowstate: Optional[WorkflowState]
+    feedback: Optional[str]
+    feedback_format: Optional[CommentFormat]
 
 
 class Assignment(object):
@@ -42,6 +78,7 @@ class Assignment(object):
                 if user_id == grade["userid"]:
                     grade_json = grade
                     break
+
             if "new" != submission["status"]:
                 try:
                     self.submissions.append(Submission(user_id, grade_json, submission))
@@ -50,7 +87,7 @@ class Assignment(object):
                         'Missing grade for student "{}" in assignment "{}". Fix ASAP at {}'.format(
                             get_user_name(user_id),
                             self.name,
-                            "{}//mod/assign/view.php?id={}&action=grader&userid={}".format(
+                            "{}/mod/assign/view.php?id={}&action=grader&userid={}".format(
                                 URL, self.cmid, user_id
                             ),
                         )
@@ -123,6 +160,9 @@ class Assignment(object):
                 students_names if students_names is not None else "all students.",
             )
 
+    def save_grades(self, grades: list[GradeParams]):
+        mod_assign_save_grades(self.uid, grades=grades)
+
 
 def mod_assign_lock_submissions(assignment_id, user_ids):
     """
@@ -151,12 +191,63 @@ def mod_assign_get_grades(assignment_ids):
     Returns the grades for all the assignments
     """
     response = call_moodle_api("mod_assign_get_grades", assignmentids=assignment_ids)
-
     grades = {}
     for grds in response["assignments"]:
         grades[grds["assignmentid"]] = grds["grades"]
 
     return grades
+
+
+def grade_parameters(
+    user_id: int,
+    grade: float,
+    addattempt: int = 0,
+    workflowstate: WorkflowState = WorkflowState.IN_REVIEW,
+    feedback: str = "",
+    feedback_format: CommentFormat = CommentFormat.HTML,
+):
+    return {
+        "userid": user_id,
+        "grade": float(grade),
+        "attemptnumber": -1,
+        "addattempt": addattempt or 0,
+        "workflowstate": workflowstate,
+        "plugindata": {
+            "assignfeedbackcomments_editor": {
+                "format": feedback_format,
+                "text": str(feedback) if feedback else "",
+            }
+        },
+    }
+
+
+def mod_assign_save_grades(
+    assignment_id,
+    # always apply grading to team
+    # if the assignment has no group submission, this has no effect.
+    grades: list[GradeParams] = [],
+    applytoall: Optional[int] = 1,
+):
+    """
+    Save a grade update for a single student.
+    https://docs.moodle.org/401/en/Assignment_settings#Feedback_types
+    """
+    return call_moodle_api(
+        "mod_assign_save_grades",
+        assignmentid=assignment_id,
+        applytoall=applytoall,
+        grades=[
+            grade_parameters(
+                user_id=grade["user_id"],
+                grade=grade["grade"],
+                addattempt=grade.get("addattempt"),
+                workflowstate=grade.get("workflowstate"),
+                feedback=grade.get("feedback"),
+                feedback_format=grade.get("feedback_format"),
+            )
+            for grade in grades
+        ],
+    )
 
 
 def mod_assign_get_assignments(course_id):

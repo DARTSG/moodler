@@ -30,6 +30,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install poetry
           poetry install
+      - name: pytest
+        run: |
+          poetry run pytest tests/
       - name: isort
         run: |
           poetry run isort --check moodler/ main.py

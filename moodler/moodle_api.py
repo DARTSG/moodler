@@ -7,6 +7,7 @@ import requests
 
 from moodler.consts import REQUEST_FORMAT
 from moodler.moodle_exception import MoodlerException
+from moodler.urlencode import urlencode
 
 logger = logging.getLogger(__name__)
 
@@ -49,20 +50,7 @@ def build_url(moodle_function, **kwargs):
     Generic function for building a URL for Moodle API.
     """
     url = REQUEST_FORMAT.format(moodle_function)
-
-    for arg_name, arg_value in kwargs.items():
-        if arg_value is None:
-            continue
-
-        if isinstance(arg_value, list):
-            # Appending the list of arguments into the URL for the request
-            for i, arg_value_item in enumerate(arg_value):
-                url += "&{}[{}]={}".format(arg_name, i, arg_value_item)
-
-        else:
-            # Appending the argument into the URL as a parameter.
-            url += "&{}={}".format(arg_name, arg_value)
-
+    url += "&" + urlencode(kwargs)
     return url
 
 
@@ -71,7 +59,6 @@ def call_moodle_api(moodle_function, **kwargs):
     Utility function that will wrap a Moodle function.
     """
     url = build_url(moodle_function, **kwargs)
-
     response = requests.get(url)
 
     try:
