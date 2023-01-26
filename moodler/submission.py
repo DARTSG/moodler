@@ -74,7 +74,7 @@ class Submission(object):
         return all(
             [
                 self.timestamp is not None,
-                self.status == SubmissionStatus.SUBMITTED,
+                self.status == SubmissionStatus.SUBMITTED.value,
                 any(
                     [
                         self.grade is None,
