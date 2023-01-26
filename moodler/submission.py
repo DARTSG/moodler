@@ -23,9 +23,7 @@ class Grade(object):
         self._json_data = grade_json
 
     def __repr__(self):
-        return "Grade(grade={}, timestamp={})".format(
-            self.grade, self.timestamp
-        )
+        return "Grade(grade={}, timestamp={})".format(self.grade, self.timestamp)
 
 
 class SubmissionFile(object):
@@ -35,9 +33,7 @@ class SubmissionFile(object):
         self._json_data = submission_file_json
 
     def __repr__(self):
-        return "SubmissionFile(url={}, timestamp={})".format(
-            self.url, self.timestamp
-        )
+        return "SubmissionFile(url={}, timestamp={})".format(self.url, self.timestamp)
 
 
 class Submission(object):
@@ -86,10 +82,7 @@ class Submission(object):
                         self.grade is not None
                         and (
                             self.grade.timestamp is None
-                            or (
-                                self.grade.grade is not None
-                                and self.grade.grade < 0
-                            )
+                            or (self.grade.grade is not None and self.grade.grade < 0)
                         ),
                     ]
                 ),
