@@ -1,6 +1,7 @@
 import csv
 import logging
 import os
+from collections import OrderedDict
 from typing import Sequence
 
 from moodler.config import STUDENTS_TO_IGNORE
@@ -21,8 +22,8 @@ REQUIRED_GRADING_SHEET_HEADERS = [
     "Feedback comments",
 ]
 
-STUDENT_INDEX = 1
-STATUS_INDEX = 3
+STUDENT_COL_NAME = "Full name"
+STATUS_COL_NAME = "Status"
 
 
 class InvalidCsv(MoodlerException):
@@ -99,9 +100,11 @@ def write_output_csv(output_csv_path: str, data: Sequence[Sequence[str]]):
         except ValueError as e:
             raise InvalidCsv("Invalid headers") from e
 
+        cols = OrderedDict(
+            [(el, headers.index(el)) for el in REQUIRED_GRADING_SHEET_HEADERS]
+        )
         # Write first line from source CSV
-        cols = [headers.index(el) for el in REQUIRED_GRADING_SHEET_HEADERS]
-        writer.writerow((headers[i] for i in cols))
+        writer.writerow((headers[i] for i in cols.values()))
 
         # To prevent the following exception:
         # _csv.Error: field larger than field limit (131072)
@@ -109,22 +112,22 @@ def write_output_csv(output_csv_path: str, data: Sequence[Sequence[str]]):
 
         for row in content:
             # Remove unsued rows
-            row = (row[i] for i in cols)
+            row = [row[i] for i in cols.values()]
 
             # Verify that the submission is of the status we're looking for
-            if should_skip_status(row[STATUS_INDEX]):
+            if should_skip_status(row[cols[STATUS_COL_NAME]]):
                 continue
 
-            if should_skip_student(row[STUDENT_INDEX]):
+            if should_skip_student(row[cols[STUDENT_COL_NAME]]):
                 logger.debug(
                     "Student %s made a submission, ignoring it...",
-                    row[STUDENT_INDEX],
+                    row[cols[STUDENT_COL_NAME]],
                 )
                 continue
 
             writer.writerow(row)
 
-            if is_resubmission(row[STATUS_INDEX]):
+            if is_resubmission(row[cols[STATUS_COL_NAME]]):
                 resubmissions_counter += 1
             else:
                 submissions_counter += 1
