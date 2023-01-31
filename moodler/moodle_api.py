@@ -5,7 +5,7 @@ import logging
 
 import requests
 
-from moodler.consts import REQUEST_FORMAT
+from moodler.consts import TOKEN, URL
 from moodler.moodle_exception import MoodlerException
 from moodler.urlencode import urlencode
 
@@ -45,29 +45,35 @@ def validate_response(function_name, response):
             )
 
 
-def build_url(moodle_function, **kwargs):
+def prepare_data(moodle_function, **kwargs):
     """
-    Generic function for building a URL for Moodle API.
+    Generic function for building urlencoded data for Moodle API.
     """
-    url = REQUEST_FORMAT.format(moodle_function)
-    url += "&" + urlencode(kwargs)
-    return url
+    return urlencode(
+        {
+            **kwargs,
+            "wstoken": TOKEN,
+            "wsfunction": moodle_function,
+            "moodlewsrestformat": "json",
+        }
+    )
 
 
 def call_moodle_api(moodle_function, **kwargs):
     """
     Utility function that will wrap a Moodle function.
     """
-    url = build_url(moodle_function, **kwargs)
-    response = requests.get(url)
-
+    headers = {"Content-Type": "application/x-www-form-urlencoded"}
+    data = prepare_data(moodle_function, **kwargs)
+    response = requests.post(URL, data, headers=headers)
+    response.raise_for_status()
     try:
         response_json = response.json()
     except ValueError as e:
         raise ValueError(
-            f"Failed calling api to url ({url}) with status code {response.status_code}\nMake sure the URL is correct"
+            f"Failed calling api with the data ({data}) with status code "
+            f"{response.status_code}\nMake sure the URL is correct"
         ) from e
 
     validate_response(moodle_function, response_json)
-
     return response_json

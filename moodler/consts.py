@@ -1,5 +1,4 @@
-from moodler.config import TOKEN, URL
+from moodler import config
 
-REQUEST_FORMAT = "{}/webservice/rest/server.php?wstoken={}&wsfunction={}&moodlewsrestformat=json".format(
-    URL, TOKEN, "{}"
-)
+URL = "{}/webservice/rest/server.php".format(config.URL)
+TOKEN = config.TOKEN

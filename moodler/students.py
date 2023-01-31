@@ -1,9 +1,6 @@
 import logging
 
-import requests
-
-from moodler.consts import REQUEST_FORMAT
-from moodler.moodle_api import call_moodle_api, validate_response
+from moodler.moodle_api import call_moodle_api
 from moodler.moodle_exception import MoodlerException
 
 logger = logging.getLogger(__name__)
@@ -17,7 +14,9 @@ def core_enrol_get_enrolled_users(course_id):
     """
     Get enrolled users by course id
     """
-    response = call_moodle_api("core_enrol_get_enrolled_users", courseid=course_id)
+    response = call_moodle_api(
+        "core_enrol_get_enrolled_users", courseid=course_id
+    )
 
     return response
 
@@ -89,15 +88,9 @@ def list_students():
     system. This is kept for debugging/backward compatibility, you should work
     with get_students instead.
     """
-    # TODO: This is not clear how to change this to call the call_moodle_api
-    #  utility function.
-    response = requests.get(
-        REQUEST_FORMAT.format("core_user_get_users")
-        + "&criteria[0][key]=email&criteria[0][value]=%%"
+    response = call_moodle_api(
+        "core_user_get_users", criteria=[{"key": "email", "value": "%%"}]
     )
-
-    validate_response("core_user_get_users", response.json())
-
     # Create users map
     users_map = {}
     for user in response.json()["users"]:
