@@ -11,20 +11,15 @@ logger = logging.getLogger(__name__)
 
 BIG_NUMBER_FOR_FIELD_MAX = 0x1000000
 
-GRADING_SHEET_VALID_HEADERS = [
+REQUIRED_GRADING_SHEET_HEADERS = [
     "Identifier",
     "Full name",
     "Email address",
     "Status",
     "Grade",
-    "Maximum Grade",
-    "Grade can be changed",
-    "Last modified (submission)",
-    "Online text",
     "Last modified (grade)",
     "Feedback comments",
 ]
-COLUMNS_TO_REMOVE = [5, 6, 7, 8]
 
 STUDENT_INDEX = 1
 STATUS_INDEX = 3
@@ -59,9 +54,9 @@ def validate_headers(headers: Sequence[str]):
     """
     Validating the row contains all the rows required in a CSV downloaded from Moodle.
     """
-    if GRADING_SHEET_VALID_HEADERS != headers:
+    if not set(REQUIRED_GRADING_SHEET_HEADERS).issubset(set(headers)):
         raise ValueError(
-            f"Headers mismatch. Expected {GRADING_SHEET_VALID_HEADERS}, received {headers}"
+            f"Headers mismatch. Expected {REQUIRED_GRADING_SHEET_HEADERS} to be in {headers}"
         )
 
 
@@ -105,7 +100,8 @@ def write_output_csv(output_csv_path: str, data: Sequence[Sequence[str]]):
             raise InvalidCsv("Invalid headers") from e
 
         # Write first line from source CSV
-        writer.writerow((*headers[:5], *headers[-2:]))
+        cols = [headers.index(el) for el in REQUIRED_GRADING_SHEET_HEADERS]
+        writer.writerow((headers[i] for i in cols))
 
         # To prevent the following exception:
         # _csv.Error: field larger than field limit (131072)
@@ -113,7 +109,7 @@ def write_output_csv(output_csv_path: str, data: Sequence[Sequence[str]]):
 
         for row in content:
             # Remove unsued rows
-            row = (*row[:5], *row[-2:])
+            row = (row[i] for i in cols)
 
             # Verify that the submission is of the status we're looking for
             if should_skip_status(row[STATUS_INDEX]):
@@ -121,7 +117,8 @@ def write_output_csv(output_csv_path: str, data: Sequence[Sequence[str]]):
 
             if should_skip_student(row[STUDENT_INDEX]):
                 logger.debug(
-                    "Student %s made a submission, ignoring it...", row[STUDENT_INDEX]
+                    "Student %s made a submission, ignoring it...",
+                    row[STUDENT_INDEX],
                 )
                 continue
 
