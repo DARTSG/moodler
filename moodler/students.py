@@ -14,9 +14,7 @@ def core_enrol_get_enrolled_users(course_id):
     """
     Get enrolled users by course id
     """
-    response = call_moodle_api(
-        "core_enrol_get_enrolled_users", courseid=course_id
-    )
+    response = call_moodle_api("core_enrol_get_enrolled_users", courseid=course_id)
 
     return response
 
