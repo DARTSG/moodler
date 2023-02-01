@@ -17,9 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 def setup_logging():
-    logging.basicConfig(
-        format="%(levelname)s - %(message)s", level=logging.INFO
-    )
+    logging.basicConfig(format="%(levelname)s - %(message)s", level=logging.INFO)
 
 
 def parse_args():
@@ -30,9 +28,7 @@ def parse_args():
     parser_ungraded = subparsers.add_parser(
         "ungraded", help="Prints the amount of ungraded submissions"
     )
-    parser_ungraded.add_argument(
-        "course_id", type=int, help="The course id to query"
-    )
+    parser_ungraded.add_argument("course_id", type=int, help="The course id to query")
     parser_ungraded.add_argument(
         "--verbose",
         "-v",
@@ -48,9 +44,7 @@ def parse_args():
     parser_feedbacks = subparsers.add_parser(
         "feedbacks", help="Exports the feedbacks for a course"
     )
-    parser_feedbacks.add_argument(
-        "course_id", type=int, help="The course id to query"
-    )
+    parser_feedbacks.add_argument("course_id", type=int, help="The course id to query")
     parser_feedbacks.add_argument(
         "download_folder", type=str, help="The folder to export to"
     )
@@ -58,9 +52,7 @@ def parse_args():
     parser_export = subparsers.add_parser(
         "export", help="Exports submissions, materials, and grades for a course"
     )
-    parser_export.add_argument(
-        "course_id", type=int, help="The course id to query"
-    )
+    parser_export.add_argument("course_id", type=int, help="The course id to query")
     parser_export.add_argument(
         "download_folder", type=str, help="The folder to export to"
     )
