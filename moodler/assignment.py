@@ -1,5 +1,4 @@
 import logging
-from enum import IntEnum
 from typing import Optional, TypedDict
 
 from moodler.config import URL
