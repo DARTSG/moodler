@@ -4,7 +4,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import NamedTuple
 
-from moodler.assignment import Assignment, get_assignments
+from moodler.assignment import Assignment, WorkflowState, get_assignments
 from moodler.config import MOODLE_PASSWORD, MOODLE_USERNAME, STUDENTS_TO_IGNORE
 from moodler.download import (
     DownloadException,
@@ -19,6 +19,25 @@ from moodler.students import get_students
 from moodler.utilities import safe_path
 
 logger = logging.getLogger(__name__)
+
+
+# See https://github.com/moodle/moodle/blob/7c3188b/mod/assign/classes/output/renderer.php#L547-L548
+SUBMISSION_UNRELEASED_STATUSES = (WorkflowState.RELEASED.value, "graded")
+
+
+class ExerciseStatistics(NamedTuple):
+    submissions = int
+    ungraded = int
+    resubmissions = int
+    unreleased: int
+
+
+class SubmissionStatistics(NamedTuple):
+    total_submissions: int
+    total_ungraded: int
+    total_resubmissions: int
+    total_unreleased: int
+    exercises: dict[str, ExerciseStatistics]
 
 
 class StudentStatus(NamedTuple):
@@ -67,6 +86,7 @@ def submissions_statistics(course_id, is_verbose=False, download_folder=None):
     total_submissions = 0
     total_ungraded = 0
     total_resubmissions = 0
+    total_unreleased = 0
     assignments_statistics = {}
 
     assignments = get_assignments(course_id)
@@ -78,11 +98,15 @@ def submissions_statistics(course_id, is_verbose=False, download_folder=None):
         current_assignment_ungraded_amount = len(current_assignment_ungraded)
 
         current_assignment_resubmissions_amount = 0
+        current_assignment_unreleased_amount = 0
         ungraded_ignored = []
 
         for submission in current_assignment_ungraded:
             if submission.resubmitted:
                 current_assignment_resubmissions_amount += 1
+
+            if submission.gradingstatus not in SUBMISSION_UNRELEASED_STATUSES:
+                current_assignment_unreleased_amount += 1
 
             if submission.user_id in STUDENTS_TO_IGNORE.keys():
                 ungraded_ignored.append(STUDENTS_TO_IGNORE[submission.user_id])
@@ -98,6 +122,7 @@ def submissions_statistics(course_id, is_verbose=False, download_folder=None):
         total_submissions += current_assignment_submissions_amount
         total_ungraded += current_assignment_ungraded_amount
         total_resubmissions += current_assignment_resubmissions_amount
+        total_unreleased += current_assignment_unreleased_amount
 
         # Print total stats about this assignment
         if is_verbose and len(ungraded_ignored) != 0:
@@ -123,18 +148,20 @@ def submissions_statistics(course_id, is_verbose=False, download_folder=None):
                 len(assignment.submissions),
             )
 
-        assignments_statistics[assignment.name] = {
-            "submissions": current_assignment_submissions_amount,
-            "ungraded": amount_ungraded_not_ignored,
-            "resubmissions": current_assignment_resubmissions_amount,
-        }
+        assignments_statistics[assignment.name] = ExerciseStatistics(
+            submissions=current_assignment_submissions_amount,
+            ungraded=amount_ungraded_not_ignored,
+            resubmissions=current_assignment_resubmissions_amount,
+            unreleased=current_assignment_unreleased_amount,
+        )._asdict()
 
-    return {
-        "total_submissions": total_submissions,
-        "total_ungraded": total_ungraded,
-        "total_resubmissions": total_resubmissions,
-        "exercises": assignments_statistics,
-    }
+    return SubmissionStatistics(
+        total_submissions=total_submissions,
+        total_ungraded=total_ungraded,
+        total_resubmissions=total_resubmissions,
+        total_unreleased=total_unreleased,
+        exercises=assignments_statistics,
+    )._asdict()
 
 
 def export_feedbacks(course_id: int, folder: Path):
@@ -174,9 +201,9 @@ def _export_assignment(assignment: Assignment, folder: Path):
     assign_folder.mkdir(parents=True, exist_ok=True)
 
     if len(assignment.description) > 0:
-        description_file = assign_folder / safe_path(assignment.name).with_suffix(
-            ".txt"
-        )
+        description_file = assign_folder / safe_path(
+            assignment.name
+        ).with_suffix(".txt")
         description_file.write_text(assignment.description)
     for attachment in assignment.attachments:
         download_file(attachment, assign_folder)
@@ -301,7 +328,10 @@ def status_report(course_id):
             user_name = users_map[submission.user_id]
             submissions_by_user[user_name] += 1
 
-            if last_submission_by_user[user_name].timestamp < submission.timestamp:
+            if (
+                last_submission_by_user[user_name].timestamp
+                < submission.timestamp
+            ):
                 last_submission_by_user[user_name] = SubmissionTuple(
                     name=assignment.name, timestamp=submission.timestamp
                 )
@@ -309,7 +339,9 @@ def status_report(course_id):
     student_statuses = []
     for user, submission_count in submissions_by_user.items():
         student_statuses.append(
-            StudentStatus(user, submission_count, last_submission_by_user[user].name)
+            StudentStatus(
+                user, submission_count, last_submission_by_user[user].name
+            )
         )
 
     student_statuses = sorted(

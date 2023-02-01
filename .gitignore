@@ -1,6 +1,7 @@
 # Project paths
 /venv/*
 .idea/*
+.vscode/
 
 # Environment configuration
 .env
