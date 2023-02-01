@@ -93,7 +93,10 @@ def submissions_statistics(course_id, is_verbose=False, download_folder=None):
         submitted_submissions = assignment.submitted()
         ungraded_submissions = assignment.ungraded()
         ungraded_amount = len(ungraded_submissions)
-        resubmissions_amount = len([s for s in submitted_submissions if s.resubmitted])
+        resubmissions_amount = len(
+            # Attempt number counting starts from 0. Hence the 2nd attempt has attemptnumber equal 1.
+            [s for s in submitted_submissions if s.attemptnumber > 0]
+        )
         unreleased_amount = len([s for s in submitted_submissions if s.released])
         ungraded_ignored = []
 

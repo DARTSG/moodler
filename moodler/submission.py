@@ -43,6 +43,7 @@ class Submission(object):
             self.grade = None
 
         self.status = submission_json["status"]
+        self.attemptnumber = submission_json["attemptnumber"]
         self.gradingstatus = submission_json["gradingstatus"]
         self.submission_files = []
         self.timestamp = submission_json["timemodified"]
