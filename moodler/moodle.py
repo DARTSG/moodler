@@ -201,9 +201,9 @@ def _export_assignment(assignment: Assignment, folder: Path):
     assign_folder.mkdir(parents=True, exist_ok=True)
 
     if len(assignment.description) > 0:
-        description_file = assign_folder / safe_path(
-            assignment.name
-        ).with_suffix(".txt")
+        description_file = assign_folder / safe_path(assignment.name).with_suffix(
+            ".txt"
+        )
         description_file.write_text(assignment.description)
     for attachment in assignment.attachments:
         download_file(attachment, assign_folder)
@@ -328,10 +328,7 @@ def status_report(course_id):
             user_name = users_map[submission.user_id]
             submissions_by_user[user_name] += 1
 
-            if (
-                last_submission_by_user[user_name].timestamp
-                < submission.timestamp
-            ):
+            if last_submission_by_user[user_name].timestamp < submission.timestamp:
                 last_submission_by_user[user_name] = SubmissionTuple(
                     name=assignment.name, timestamp=submission.timestamp
                 )
@@ -339,9 +336,7 @@ def status_report(course_id):
     student_statuses = []
     for user, submission_count in submissions_by_user.items():
         student_statuses.append(
-            StudentStatus(
-                user, submission_count, last_submission_by_user[user].name
-            )
+            StudentStatus(user, submission_count, last_submission_by_user[user].name)
         )
 
     student_statuses = sorted(
