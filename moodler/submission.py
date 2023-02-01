@@ -1,12 +1,9 @@
-from enum import Enum
-
+from moodler.enums import SubmissionStatus, WorkflowState
 from moodler.moodle_api import call_moodle_api
 from moodler.moodle_exception import MoodlerException
 
-
-class SubmissionStatus(Enum):
-    NEW = "new"
-    SUBMITTED = "submitted"
+# See https://github.com/moodle/moodle/blob/7c3188b/mod/assign/classes/output/renderer.php#L547-L548
+SUBMISSION_RELEASED_STATUSES = (WorkflowState.RELEASED.value, "graded")
 
 
 class MissingGrade(MoodlerException):
@@ -59,6 +56,13 @@ class Submission(object):
 
         # Useful for debugging
         self._submission_json = submission_json
+
+    @property
+    def released(self):
+        """
+        Indicates whether the greade is available for the student.
+        """
+        return self.gradingstatus in SUBMISSION_RELEASED_STATUSES
 
     @property
     def resubmitted(self):

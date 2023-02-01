@@ -4,7 +4,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import NamedTuple
 
-from moodler.assignment import Assignment, WorkflowState, get_assignments
+from moodler.assignment import Assignment, get_assignments
 from moodler.config import MOODLE_PASSWORD, MOODLE_USERNAME, STUDENTS_TO_IGNORE
 from moodler.download import (
     DownloadException,
@@ -19,10 +19,6 @@ from moodler.students import get_students
 from moodler.utilities import safe_path
 
 logger = logging.getLogger(__name__)
-
-
-# See https://github.com/moodle/moodle/blob/7c3188b/mod/assign/classes/output/renderer.php#L547-L548
-SUBMISSION_UNRELEASED_STATUSES = (WorkflowState.RELEASED.value, "graded")
 
 
 class ExerciseStatistics(NamedTuple):
@@ -93,21 +89,15 @@ def submissions_statistics(course_id, is_verbose=False, download_folder=None):
     users_map = get_students(course_id)
 
     for assignment in assignments:
-        current_assignment_submissions_amount = len(assignment.submissions)
-        current_assignment_ungraded = assignment.ungraded()
-        current_assignment_ungraded_amount = len(current_assignment_ungraded)
-
-        current_assignment_resubmissions_amount = 0
-        current_assignment_unreleased_amount = 0
+        submissions_amount = len(assignment.submissions)
+        submitted_submissions = assignment.submitted()
+        ungraded_submissions = assignment.ungraded()
+        ungraded_amount = len(ungraded_submissions)
+        resubmissions_amount = len([s for s in submitted_submissions if s.resubmitted])
+        unreleased_amount = len([s for s in submitted_submissions if s.released])
         ungraded_ignored = []
 
-        for submission in current_assignment_ungraded:
-            if submission.resubmitted:
-                current_assignment_resubmissions_amount += 1
-
-            if submission.gradingstatus not in SUBMISSION_UNRELEASED_STATUSES:
-                current_assignment_unreleased_amount += 1
-
+        for submission in ungraded_submissions:
             if submission.user_id in STUDENTS_TO_IGNORE.keys():
                 ungraded_ignored.append(STUDENTS_TO_IGNORE[submission.user_id])
 
@@ -119,10 +109,10 @@ def submissions_statistics(course_id, is_verbose=False, download_folder=None):
                     download_folder,
                 )
 
-        total_submissions += current_assignment_submissions_amount
-        total_ungraded += current_assignment_ungraded_amount
-        total_resubmissions += current_assignment_resubmissions_amount
-        total_unreleased += current_assignment_unreleased_amount
+        total_submissions += submissions_amount
+        total_ungraded += ungraded_amount
+        total_resubmissions += resubmissions_amount
+        total_unreleased += unreleased_amount
 
         # Print total stats about this assignment
         if is_verbose and len(ungraded_ignored) != 0:
@@ -135,9 +125,7 @@ def submissions_statistics(course_id, is_verbose=False, download_folder=None):
                 ungraded_ignored,
             )
 
-        amount_ungraded_not_ignored = current_assignment_ungraded_amount - len(
-            ungraded_ignored
-        )
+        amount_ungraded_not_ignored = ungraded_amount - len(ungraded_ignored)
         if amount_ungraded_not_ignored != 0:
             logger.info(
                 "Total ungraded for assignment [%s] (CMID %s, ID %s): %s/%s",
@@ -149,10 +137,10 @@ def submissions_statistics(course_id, is_verbose=False, download_folder=None):
             )
 
         assignments_statistics[assignment.name] = ExerciseStatistics(
-            submissions=current_assignment_submissions_amount,
+            submissions=submissions_amount,
             ungraded=amount_ungraded_not_ignored,
-            resubmissions=current_assignment_resubmissions_amount,
-            unreleased=current_assignment_unreleased_amount,
+            resubmissions=resubmissions_amount,
+            unreleased=unreleased_amount,
         )._asdict()
 
     return SubmissionStatistics(
