@@ -65,11 +65,13 @@ def submissions_statistics(course_id, is_verbose=False, download_folder=None):
             'total_submissions': 10,
             'total_ungraded': 5,
             'total_resubmissions': 2,
+            'total_unreleased': 1,
             'exercises': {
                 'assign1': {
                     'submissions': 2,
                     'ungraded': 2,
-                    'resubmissions': 0}
+                    'resubmissions': 0,
+                    'unreleased': 1}
                 },
                 ...
             }
@@ -93,10 +95,7 @@ def submissions_statistics(course_id, is_verbose=False, download_folder=None):
         submitted_submissions = assignment.submitted()
         ungraded_submissions = assignment.ungraded()
         ungraded_amount = len(ungraded_submissions)
-        resubmissions_amount = len(
-            # Attempt number counting starts from 0. Hence the 2nd attempt has attemptnumber equal 1.
-            [s for s in submitted_submissions if s.attemptnumber > 0]
-        )
+        resubmissions_amount = len([s for s in ungraded_submissions if s.resubmitted])
         unreleased_amount = len([s for s in submitted_submissions if s.released])
         ungraded_ignored = []
 
