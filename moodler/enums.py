@@ -1,4 +1,4 @@
-from enum import Enum, IntEnum, auto
+from enum import Enum, IntEnum
 
 
 class WorkflowState(Enum):
@@ -28,17 +28,17 @@ class CommentFormat(IntEnum):
 
 # See https://github.com/moodle/moodle/blob/df502b3/mod/assign/locallib.php#L30-L33
 class SubmissionStatus(Enum):
-    NEW = auto()
+    NEW = "new"
     # If instructor has enabled draft mode, your assignment Submission status will be Draft
     # (not submitted) until the `Submit` assignment button is selected.
     # the process.
-    DRAFT = auto()
+    DRAFT = "draft"
     # When your assignment has been fully submitted, you will see the Submission status indicated
     # as Submitted for grading.
-    SUBMITTED = auto()
+    SUBMITTED = "submitted"
     # If the submission setting 'Attempts reopened' is set to 'Automatically until pass' and
     # a submission is graded below the grade to pass, then then submission is automatically
     # unlocked when the grade is saved. Similarly, if the submission setting 'Attempts reopened'
     # is set to Manually, and a teacher selects 'Allow another attempt, then the submission is
     # automatically unlocked.
-    REOPENED = auto()
+    REOPENED = "reopened"

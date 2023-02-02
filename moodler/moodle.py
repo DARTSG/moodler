@@ -95,8 +95,16 @@ def submissions_statistics(course_id, is_verbose=False, download_folder=None):
         submitted_submissions = assignment.submitted()
         ungraded_submissions = assignment.ungraded()
         ungraded_amount = len(ungraded_submissions)
+        # Resubmission
         resubmissions_amount = len([s for s in ungraded_submissions if s.resubmitted])
-        unreleased_amount = len([s for s in submitted_submissions if s.released])
+        # Graded but unreleased
+        unreleased_amount = len(
+            [
+                s
+                for s in submitted_submissions
+                if not any([s.needs_grading(), s.released])
+            ]
+        )
         ungraded_ignored = []
 
         for submission in ungraded_submissions:

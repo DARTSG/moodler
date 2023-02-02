@@ -2,16 +2,11 @@ import logging
 from typing import Optional, TypedDict
 
 from moodler.config import URL
-from moodler.enums import CommentFormat, WorkflowState
+from moodler.enums import CommentFormat, SubmissionStatus, WorkflowState
 from moodler.moodle_api import call_moodle_api
 from moodler.moodle_exception import MoodlerException
 from moodler.students import get_students, get_students_ids_by_name, get_user_name
-from moodler.submission import (
-    MissingGrade,
-    Submission,
-    SubmissionStatus,
-    mod_assign_get_submissions,
-)
+from moodler.submission import MissingGrade, Submission, mod_assign_get_submissions
 
 logger = logging.getLogger(__name__)
 
