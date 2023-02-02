@@ -1,8 +1,8 @@
 import logging
-from enum import Enum, IntEnum
 from typing import Optional, TypedDict
 
 from moodler.config import URL
+from moodler.enums import CommentFormat, SubmissionStatus, WorkflowState
 from moodler.moodle_api import call_moodle_api
 from moodler.moodle_exception import MoodlerException
 from moodler.students import get_students, get_students_ids_by_name, get_user_name
@@ -21,31 +21,6 @@ class InvalidAssignmentID(AssignmentException):
 
 class EmptyCourseError(AssignmentException):
     pass
-
-
-class WorkflowState(Enum):
-    """
-    The next marking workflow state
-    One advantage of using marking workflow is that the grades can be hidden from students until
-    they are set to 'Released'.
-    See https://docs.moodle.org/401/en/Assignment_settings#Grade
-    """
-
-    NOT_MARKED = "notmarked"  # the marker has not yet started
-    IN_MARKING = "inmarking"  # the marker has started but not yet finished
-    MARKING_COMPLETED = "markingcompleted"  # the marker has finished but might need to go back for checking/corrections
-    IN_REVIEW = (
-        "inreview"  # the marking is now with the teacher in charge for quality checking
-    )
-    READY_FOR_RELEASE = "readyforrelease"  # the teacher in charge is satisfied with the marking but wait before giving students access to the marking
-    RELEASED = "released"  # the student can access the grades/feedback
-
-
-class CommentFormat(IntEnum):
-    MOODLE = 0
-    HTML = 1
-    PLAIN = 2
-    MARKDOWN = 4
 
 
 class GradeParams(TypedDict):
@@ -97,6 +72,11 @@ class Assignment(object):
         self._assignment_json = assignment_json
         self._submissions_json = submissions_json
         self._grades_json = grades_json
+
+    def submitted(self):
+        return [
+            s for s in self.submissions if s.status == SubmissionStatus.SUBMITTED.value
+        ]
 
     def ungraded(self):
         submissions: list[Submission] = []
