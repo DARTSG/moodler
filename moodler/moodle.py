@@ -22,9 +22,9 @@ logger = logging.getLogger(__name__)
 
 
 class ExerciseStatistics(NamedTuple):
-    submissions = int
-    ungraded = int
-    resubmissions = int
+    submissions: int
+    ungraded: int
+    resubmissions: int
     unreleased: int
 
 
