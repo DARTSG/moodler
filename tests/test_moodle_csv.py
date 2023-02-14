@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from moodler.moodle_csv import (  # should_skip_status,
+from moodler.moodle_csv import (
     has_grade,
     is_empty_field,
     is_resubmission,
