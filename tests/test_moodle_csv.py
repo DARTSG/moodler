@@ -1,12 +1,12 @@
 import csv
-import textwrap
 from datetime import datetime
 from pathlib import Path
 
 import pytest
 
-from moodler.moodle_csv import (
+from moodler.moodle_csv import (  # should_skip_status,
     has_grade,
+    is_empty_field,
     is_resubmission,
     parse_datetime,
     should_skip_status,
@@ -17,7 +17,31 @@ TESTDATA_DIR = Path(__file__).parent / "test_data"
 
 
 @pytest.mark.parametrize(
-    "input,expected", (("", False), ("0", True), ("1", True), ("100", True))
+    "input,expected",
+    (
+        ("", True),
+        (" ", True),
+        ("-", True),
+        (" - ", True),
+        ("0", False),
+        ("1", False),
+    ),
+)
+def test_is_empty_field(input, expected):
+    assert is_empty_field(input) == expected
+
+
+@pytest.mark.parametrize(
+    "input,expected",
+    (
+        ("", False),
+        ("0.00", True),
+        ("1", True),
+        ("100", True),
+        ("100.0", True),
+        ("-1.00", False),
+        ("Invalid value should return False", False),
+    ),
 )
 def test_has_grade(input, expected):
     assert has_grade(input) == expected
@@ -44,6 +68,7 @@ def test_parse_datetime_invalid():
     "status,last_modified_grade,last_modified_sub,expected",
     (
         ("Submitted", "", "", False),
+        ("No submission", "-", "-", False),
         ("Submitted", "Thursday, 9 February 2023, 8:52 AM", "", False),
         ("Submitted", "", "Thursday, 9 February 2023, 8:52 AM", False),
         (
@@ -85,13 +110,8 @@ def test_parse_datetime_invalid():
         ),
     ),
 )
-def test_is_resubmission(
-    status, last_modified_grade, last_modified_sub, expected
-):
-    assert (
-        is_resubmission(status, last_modified_grade, last_modified_sub)
-        == expected
-    )
+def test_is_resubmission(status, last_modified_grade, last_modified_sub, expected):
+    assert is_resubmission(status, last_modified_grade, last_modified_sub) == expected
 
 
 @pytest.mark.parametrize(
@@ -117,6 +137,10 @@ def test_should_skip_status(status, expected):
         (
             TESTDATA_DIR / "grade_worksheet_input.csv",
             TESTDATA_DIR / "grade_worksheet_output.csv",
+        ),
+        (
+            TESTDATA_DIR / "python_input.csv",
+            TESTDATA_DIR / "python_output.csv",
         ),
     ),
 )

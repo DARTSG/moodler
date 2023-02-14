@@ -36,12 +36,19 @@ class InvalidCsv(MoodlerException):
     pass
 
 
+def is_empty_field(field: str) -> bool:
+    """
+    Moodle uses empty strings or dashes to represent empty fields.
+    """
+    return field.strip() == "" or field.strip() == "-"
+
+
 def is_resubmission(status, last_modified_grade: str, last_modified_sub: str) -> bool:
     if status.endswith("- follow up submission received"):
         return True
     # If the submission is not a follow up submission, we need to check the last modified dates.
     # If no last modified dates are provided, consider the submission as a new submission.
-    if not last_modified_sub or not last_modified_grade:
+    if is_empty_field(last_modified_sub) or is_empty_field(last_modified_grade):
         return False
     # Marking workflow does not have a follow up submission received status, so the last modified
     # dates are used to determine if the submission is a new resubmission
@@ -67,7 +74,13 @@ def parse_datetime(value: str):
 def has_grade(grade: str) -> bool:
     # If the grade is empty, consider is ugraded.
     # 0 is a valid grade, so we can't use it to determine if the submission is graded.
-    return grade != ""
+    if is_empty_field(grade):
+        return False
+
+    try:
+        return float(grade) >= 0
+    except ValueError:
+        return False
 
 
 def should_skip_status(status: str) -> bool:
