@@ -198,7 +198,10 @@ def confirm_grading_with_uploaded_worksheet(
     }
     response = session.post(URL + "/mod/assign/view.php", data=data)
     result_page_content = response.text
-    success_match = re.search(r"Updated (\d+) grades and feedback", result_page_content)
+    success_match = re.search(
+        r"Updated [^\d]*(\d+)[^\d]* grades and .* feedback instances.",
+        result_page_content,
+    )
     if success_match is None:
         raise UploadException(
             "Failed to upload grading worksheet for assignment {} (ID: {})".format(
