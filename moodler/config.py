@@ -12,3 +12,6 @@ MOODLE_PASSWORD = env("MOODLE_PASSWORD")
 
 # List of names of students to not grade
 STUDENTS_TO_IGNORE = env.dict("STUDENTS_TO_IGNORE", subcast_key=int, default={})
+
+LTI_TOKEN = env("LTI_TOKEN")
+LTI_URL = env("LTI_URL")
