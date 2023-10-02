@@ -1,7 +1,8 @@
 import logging
+import requests
 from typing import Optional, TypedDict
 
-from moodler.config import URL
+from moodler.config import URL, LTI_TOKEN, LTI_URL
 from moodler.enums import CommentFormat, SubmissionStatus, WorkflowState
 from moodler.moodle_api import call_moodle_api
 from moodler.moodle_exception import MoodlerException
@@ -350,3 +351,21 @@ def get_assignment_files(course_id, assignment_id) -> list[str]:
         assignment_files.append(attachment)
 
     return assignment_files
+
+
+def get_lti_stats_by_course(course_id):
+
+    lti_api_response = requests.get(
+        f"{LTI_URL}/launch/statistics/course/{course_id}",
+        headers={
+            "Authorization": f"Token {LTI_TOKEN}"
+        }
+    )
+
+    lti_stats = lti_api_response.json()
+    formatted_lti_stats = {}
+
+    for lti_stat in lti_stats:
+        formatted_lti_stats[lti_stat["name"]] = lti_stat["stats"]
+
+    return formatted_lti_stats
