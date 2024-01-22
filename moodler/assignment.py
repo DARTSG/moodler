@@ -363,9 +363,7 @@ def get_lti_stats_by_course(course_id):
 
     lti_api_response = requests.get(
         f"{LTI_URL}/launch/statistics/course/{course_id}",
-        headers={
-            "Authorization": f"Token {LTI_TOKEN}"
-        }
+        headers={"Authorization": f"Token {LTI_TOKEN}"},
     )
 
     lti_stats = lti_api_response.json()
