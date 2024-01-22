@@ -355,6 +355,11 @@ def get_assignment_files(course_id, assignment_id) -> list[str]:
 
 def get_lti_stats_by_course(course_id):
 
+    formatted_lti_stats = {}
+
+    if LTI_URL == "" or LTI_TOKEN == "":
+        return formatted_lti_stats
+
     lti_api_response = requests.get(
         f"{LTI_URL}/launch/statistics/course/{course_id}",
         headers={
@@ -363,7 +368,6 @@ def get_lti_stats_by_course(course_id):
     )
 
     lti_stats = lti_api_response.json()
-    formatted_lti_stats = {}
 
     for lti_stat in lti_stats:
         formatted_lti_stats[lti_stat["name"]] = lti_stat["stats"]
