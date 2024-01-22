@@ -1,3 +1,4 @@
+import os
 import csv
 from datetime import datetime
 from pathlib import Path
@@ -14,6 +15,8 @@ from moodler.moodle_csv import (
 )
 
 TESTDATA_DIR = Path(__file__).parent / "test_data"
+os.environ["LTI_TOKEN"] = ""
+os.environ["LTI_URL"] = ""
 
 
 @pytest.mark.parametrize(
