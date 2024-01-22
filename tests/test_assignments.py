@@ -1,10 +1,5 @@
-import os
-
 from moodler.assignment import Assignment
 from moodler.submission import Submission, SubmissionStatus
-
-os.environ["LTI_TOKEN"] = ""
-os.environ["LTI_URL"] = ""
 
 ASSIGNMENT_JSON = {
     "id": 1,
