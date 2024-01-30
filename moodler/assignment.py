@@ -1,6 +1,7 @@
 import logging
 from typing import Optional, TypedDict
 
+from moodler.config import URL
 from moodler.enums import CommentFormat, SubmissionStatus, WorkflowState
 from moodler.moodle_api import call_moodle_api
 from moodler.moodle_exception import MoodlerException
