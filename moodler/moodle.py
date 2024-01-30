@@ -4,7 +4,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import NamedTuple
 
-from moodler.assignment import Assignment, get_assignments, get_lti_stats_by_course
+from moodler.assignment import Assignment, get_assignments
 from moodler.config import MOODLE_PASSWORD, MOODLE_USERNAME, STUDENTS_TO_IGNORE
 from moodler.download import (
     DownloadException,
@@ -151,25 +151,6 @@ def submissions_statistics(course_id, is_verbose=False, download_folder=None):
             ungraded=amount_ungraded_not_ignored,
             resubmissions=resubmissions_amount,
             unreleased=unreleased_amount,
-        )._asdict()
-
-    lti_stats = get_lti_stats_by_course(course_id)
-    for exercise_name in lti_stats:
-        exercise_submissions = lti_stats[exercise_name]["submissions"]
-        exercise_ungraded = lti_stats[exercise_name]["ungraded"]
-        exercise_resubmissions = lti_stats[exercise_name]["resubmissions"]
-        exercise_unreleased = lti_stats[exercise_name]["unreleased"]
-
-        total_submissions += exercise_submissions
-        total_ungraded += exercise_ungraded
-        total_resubmissions += exercise_resubmissions
-        total_unreleased += exercise_unreleased
-
-        assignments_statistics[exercise_name] = ExerciseStatistics(
-            submissions=exercise_submissions,
-            ungraded=exercise_ungraded,
-            resubmissions=exercise_resubmissions,
-            unreleased=exercise_unreleased,
         )._asdict()
 
     return SubmissionStatistics(
