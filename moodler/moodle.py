@@ -87,7 +87,7 @@ def submissions_statistics(course_id, is_verbose=False, download_folder=None):
     total_unreleased = 0
     assignments_statistics = {}
 
-    assignments = get_assignments(course_id)
+    assignments = get_assignments(course_id) or []
     users_map = get_students(course_id)
 
     for assignment in assignments:
