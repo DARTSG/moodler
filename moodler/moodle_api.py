@@ -1,6 +1,7 @@
 """
 This file should contain general logic for every Moodle API call.
 """
+
 import logging
 
 import requests
@@ -40,7 +41,7 @@ def validate_response(function_name, response):
         raise MoodleAPIException(
             f'Moodle API call for function "{function_name}" returned '
             f'an exception response with the following message: "{response[RESPONSE_MESSAGE_KEY]}"'
-            f'{debug_info_suffix}'
+            f"{debug_info_suffix}"
         )
 
     warnings = response.get(RESPONSE_WARNINGS_KEY, [])
