@@ -12,6 +12,12 @@ from moodler.urlencode import urlencode
 logger = logging.getLogger(__name__)
 
 
+RESPONSE_DEBUG_INFO_KEY = "debuginfo"
+RESPONSE_MESSAGE_KEY = "message"
+RESPONSE_EXCEPTION_KEY = "exception"
+RESPONSE_WARNINGS_KEY = "warnings"
+
+
 class MoodleAPIException(MoodlerException):
     pass
 
@@ -22,27 +28,33 @@ def validate_response(function_name, response):
     is it an exception.
     """
     # In some of the moodle requests a list is returned instead
-    if isinstance(response, dict):
-        if "exception" in response:
-            raise MoodleAPIException(
-                "Moodle API call for function '{}' returned "
-                "an exception response with the following "
-                "message: {}".format(function_name, response["message"])
-            )
+    if not isinstance(response, dict):
+        return
 
-        warnings = response.get("warnings", [])
-        if warnings:
-            # Warning example:
-            # User is not enrolled or does not have requested capability
-            # Warnings can also be a list of dicts if the api call returns
-            # multiple objects.
-            # Some warnings are useless, some are critical.
+    if RESPONSE_EXCEPTION_KEY in response:
+        debug_info_suffix = ""
+        if RESPONSE_DEBUG_INFO_KEY in response:
+            debug_info_suffix = f'. Debug info: "{response[RESPONSE_DEBUG_INFO_KEY]}"'
 
-            logger.debug(
-                "API function '%s' returned the following warning: %s",
-                function_name,
-                str(warnings),
-            )
+        raise MoodleAPIException(
+            f'Moodle API call for function "{function_name}" returned '
+            f'an exception response with the following message: "{response[RESPONSE_MESSAGE_KEY]}"'
+            f'{debug_info_suffix}'
+        )
+
+    warnings = response.get(RESPONSE_WARNINGS_KEY, [])
+    if warnings:
+        # Warning example:
+        # User is not enrolled or does not have requested capability
+        # Warnings can also be a list of dicts if the api call returns
+        # multiple objects.
+        # Some warnings are useless, some are critical.
+
+        logger.debug(
+            'API function "%s" returned the following warning: %s',
+            function_name,
+            str(warnings),
+        )
 
 
 def prepare_data(moodle_function, **kwargs):
