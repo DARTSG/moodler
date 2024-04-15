@@ -32,6 +32,7 @@ def validate_response(function_name, response):
         return
 
     if RESPONSE_EXCEPTION_KEY in response:
+        logger.debug(response)
         debug_info_suffix = ""
         if RESPONSE_DEBUG_INFO_KEY in response:
             debug_info_suffix = f'. Debug info: "{response[RESPONSE_DEBUG_INFO_KEY]}"'
