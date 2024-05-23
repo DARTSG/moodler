@@ -1,5 +1,6 @@
 from moodler.moodle_api import call_moodle_api
 
+
 def get_course_groups(courseid: int):
     """
     Retrieve the groups in a course
