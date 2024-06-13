@@ -47,14 +47,16 @@ class ExerciseStatistics:
                     ungraded_ignored.append(STUDENTS_TO_IGNORE[submission.user_id])
                     self.ungraded -= 1
 
-            if submission.status == SubmissionStatus.SUBMITTED.value and not any([needs_grading, submission.released]):
+            if submission.status == SubmissionStatus.SUBMITTED.value and not any(
+                [needs_grading, submission.released]
+            ):
                 self.unreleased += 1
 
         return ungraded_ignored
 
 
 @dataclass
-class SubmissionStatistics():
+class SubmissionStatistics:
     total_submissions: int
     total_ungraded: int
     total_resubmissions: int
@@ -89,7 +91,9 @@ class SubmissionTuple(NamedTuple):
     timestamp: int
 
 
-def submissions_statistics(course_id: int, groups: list[Group], is_verbose=False, download_folder=None):
+def submissions_statistics(
+    course_id: int, groups: list[Group], is_verbose=False, download_folder=None
+):
     """
     Returns a dictionary describing the status of ungraded exercises in the course.
     The dictionary looks like this:
@@ -139,7 +143,7 @@ def submissions_statistics(course_id: int, groups: list[Group], is_verbose=False
                     unreleased=0,
                 )
                 for assignment in assignments
-            }
+            },
         )
         for group_name in group_names
     }
@@ -160,7 +164,9 @@ def submissions_statistics(course_id: int, groups: list[Group], is_verbose=False
 
         for group in submissions_by_group:
             group_assignment_stats = stats[group].exercises[assignment.name]
-            ungraded_ignored = group_assignment_stats.process(submissions_by_group[group])
+            ungraded_ignored = group_assignment_stats.process(
+                submissions_by_group[group]
+            )
             stats[group].calculate()
 
             # Print assignment stats
@@ -184,7 +190,6 @@ def submissions_statistics(course_id: int, groups: list[Group], is_verbose=False
                     len(assignment.submissions),
                 )
 
-    
     return stats
 
 

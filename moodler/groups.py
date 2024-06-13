@@ -49,6 +49,6 @@ def get_user_group_map(course_id: int):
     mapping = {}
     for group in group_users:
         for userid in group["userids"]:
-                mapping[userid] = groups[group["groupid"]]
+            mapping[userid] = groups[group["groupid"]]
 
     return mapping
