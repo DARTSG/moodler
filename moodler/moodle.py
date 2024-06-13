@@ -3,7 +3,9 @@ import logging
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import NamedTuple
+from dataclasses import dataclass
 
+from moodler.enums import SubmissionStatus
 from moodler.assignment import Assignment, get_assignments
 from moodler.config import MOODLE_PASSWORD, MOODLE_USERNAME, STUDENTS_TO_IGNORE
 from moodler.download import (
@@ -17,23 +19,54 @@ from moodler.moodle_connect import connect_to_server
 from moodler.sections import core_course_get_contents, get_course_by_id
 from moodler.students import get_students
 from moodler.utilities import safe_path
+from moodler.groups import Group, get_user_group_map
 
 logger = logging.getLogger(__name__)
 
 
-class ExerciseStatistics(NamedTuple):
+@dataclass
+class ExerciseStatistics:
     submissions: int
     ungraded: int
     resubmissions: int
     unreleased: int
 
+    def process(self, submissions):
+        self.submissions = len(submissions)
+        ungraded_ignored = []
 
-class SubmissionStatistics(NamedTuple):
+        for submission in submissions:
+            needs_grading = submission.needs_grading()
+            if needs_grading:
+                self.ungraded += 1
+
+                if submission.resubmitted:
+                    self.resubmissions += 1
+
+                if submission.user_id in STUDENTS_TO_IGNORE.keys():
+                    ungraded_ignored.append(STUDENTS_TO_IGNORE[submission.user_id])
+                    self.ungraded -= 1
+
+            if submission.status == SubmissionStatus.SUBMITTED.value and not any([needs_grading, submission.released]):
+                self.unreleased += 1
+
+        return ungraded_ignored
+
+
+@dataclass
+class SubmissionStatistics():
     total_submissions: int
     total_ungraded: int
     total_resubmissions: int
     total_unreleased: int
     exercises: dict[str, ExerciseStatistics]
+
+    def calculate(self):
+        for exercise in self.exercises:
+            self.total_submissions += self.exercises[exercise].submissions
+            self.total_ungraded += self.exercises[exercise].ungraded
+            self.total_resubmissions += self.exercises[exercise].resubmissions
+            self.total_unreleased += self.exercises[exercise].unreleased
 
 
 class StudentStatus(NamedTuple):
@@ -56,12 +89,13 @@ class SubmissionTuple(NamedTuple):
     timestamp: int
 
 
-def submissions_statistics(course_id, is_verbose=False, download_folder=None):
+def submissions_statistics(course_id: int, groups: list[Group], is_verbose=False, download_folder=None):
     """
     Returns a dictionary describing the status of ungraded exercises in the course.
     The dictionary looks like this:
-        ```
-        {
+    ```
+    {
+        'Group1': {
             'total_submissions': 10,
             'total_ungraded': 5,
             'total_resubmissions': 2,
@@ -75,43 +109,48 @@ def submissions_statistics(course_id, is_verbose=False, download_folder=None):
                 },
                 ...
             }
-        }
-        ```
+        },
+        ...
+    }
+
+    If no groups, the group name will be 'null'.
+    ```
 
     If download_folder is set, downloads the ungraded exercises
     """
     logger.info("Showing ungraded submissions for course %s", course_id)
-    total_submissions = 0
-    total_ungraded = 0
-    total_resubmissions = 0
-    total_unreleased = 0
-    assignments_statistics = {}
 
-    assignments = get_assignments(course_id) or []
+    assignments = get_assignments(course_id)
+    group_names = [group.name for group in groups] if groups else ["null"]
+    user_group_map = get_user_group_map(course_id)
     users_map = get_students(course_id)
 
-    for assignment in assignments:
-        submissions_amount = len(assignment.submissions)
-        submitted_submissions = assignment.submitted()
-        ungraded_submissions = assignment.ungraded()
-        ungraded_amount = len(ungraded_submissions)
-        # Resubmission
-        resubmissions_amount = len([s for s in ungraded_submissions if s.resubmitted])
-        # Graded but unreleased
-        unreleased_amount = len(
-            [
-                s
-                for s in submitted_submissions
-                if not any([s.needs_grading(), s.released])
-            ]
+    stats = {
+        group_name: SubmissionStatistics(
+            total_submissions=0,
+            total_ungraded=0,
+            total_resubmissions=0,
+            total_unreleased=0,
+            exercises={
+                assignment.name: ExerciseStatistics(
+                    submissions=0,
+                    ungraded=0,
+                    resubmissions=0,
+                    unreleased=0,
+                )
+                for assignment in assignments
+            }
         )
-        ungraded_ignored = []
+        for group_name in group_names
+    }
 
-        for submission in ungraded_submissions:
-            if submission.user_id in STUDENTS_TO_IGNORE.keys():
-                ungraded_ignored.append(STUDENTS_TO_IGNORE[submission.user_id])
+    for assignment in assignments:
+        submissions_by_group = defaultdict(list)
+        for submission in assignment.submissions:
+            group_name = user_group_map[submission.user_id] if groups else "null"
+            submissions_by_group[group_name].append(submission)
 
-            if download_folder is not None:
+            if submission.needs_grading() and download_folder is not None:
                 download_submission(
                     assignment.name,
                     users_map[submission.user_id],
@@ -119,47 +158,34 @@ def submissions_statistics(course_id, is_verbose=False, download_folder=None):
                     download_folder,
                 )
 
-        total_submissions += submissions_amount
-        total_ungraded += ungraded_amount
-        total_resubmissions += resubmissions_amount
-        total_unreleased += unreleased_amount
+        for group in submissions_by_group:
+            group_assignment_stats = stats[group].exercises[assignment.name]
+            ungraded_ignored = group_assignment_stats.process(submissions_by_group[group])
+            stats[group].calculate()
 
-        # Print total stats about this assignment
-        if is_verbose and len(ungraded_ignored) != 0:
-            logger.info(
-                "Ignored %s submissions for assignment '%s' (CMID %s, ID %s): %s",
-                len(ungraded_ignored),
-                assignment.name,
-                assignment.cmid,
-                assignment.uid,
-                ungraded_ignored,
-            )
+            # Print assignment stats
+            if is_verbose and len(ungraded_ignored) != 0:
+                logger.info(
+                    "Ignored %s submissions for assignment '%s' (CMID %s, ID %s): %s",
+                    len(ungraded_ignored),
+                    assignment.name,
+                    assignment.cmid,
+                    assignment.uid,
+                    ungraded_ignored,
+                )
 
-        amount_ungraded_not_ignored = ungraded_amount - len(ungraded_ignored)
-        if amount_ungraded_not_ignored != 0:
-            logger.info(
-                "Total ungraded for assignment [%s] (CMID %s, ID %s): %s/%s",
-                assignment.name,
-                assignment.cmid,
-                assignment.uid,
-                amount_ungraded_not_ignored,
-                len(assignment.submissions),
-            )
+            if group_assignment_stats.ungraded != 0:
+                logger.info(
+                    "Total ungraded for assignment [%s] (CMID %s, ID %s): %s/%s",
+                    assignment.name,
+                    assignment.cmid,
+                    assignment.uid,
+                    group_assignment_stats.ungraded,
+                    len(assignment.submissions),
+                )
 
-        assignments_statistics[assignment.name] = ExerciseStatistics(
-            submissions=submissions_amount,
-            ungraded=amount_ungraded_not_ignored,
-            resubmissions=resubmissions_amount,
-            unreleased=unreleased_amount,
-        )._asdict()
-
-    return SubmissionStatistics(
-        total_submissions=total_submissions,
-        total_ungraded=total_ungraded,
-        total_resubmissions=total_resubmissions,
-        total_unreleased=total_unreleased,
-        exercises=assignments_statistics,
-    )._asdict()
+    
+    return stats
 
 
 def export_feedbacks(course_id: int, folder: Path):
