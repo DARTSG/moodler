@@ -1,11 +1,10 @@
 import csv
 import logging
 from collections import Counter, defaultdict
+from dataclasses import dataclass
 from pathlib import Path
 from typing import NamedTuple
-from dataclasses import dataclass
 
-from moodler.enums import SubmissionStatus
 from moodler.assignment import Assignment, get_assignments
 from moodler.config import MOODLE_PASSWORD, MOODLE_USERNAME, STUDENTS_TO_IGNORE
 from moodler.download import (
@@ -14,12 +13,13 @@ from moodler.download import (
     download_file,
     download_submission,
 )
+from moodler.enums import SubmissionStatus
 from moodler.feedbacks import feedbacks
+from moodler.groups import Group, get_user_group_map
 from moodler.moodle_connect import connect_to_server
 from moodler.sections import core_course_get_contents, get_course_by_id
 from moodler.students import get_students
 from moodler.utilities import safe_path
-from moodler.groups import Group, get_user_group_map
 
 logger = logging.getLogger(__name__)
 
