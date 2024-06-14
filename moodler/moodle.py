@@ -63,12 +63,11 @@ class SubmissionStatistics:
     total_unreleased: int
     exercises: dict[str, ExerciseStatistics]
 
-    def calculate(self):
-        for exercise in self.exercises:
-            self.total_submissions += self.exercises[exercise].submissions
-            self.total_ungraded += self.exercises[exercise].ungraded
-            self.total_resubmissions += self.exercises[exercise].resubmissions
-            self.total_unreleased += self.exercises[exercise].unreleased
+    def calculate(self, exercise):
+        self.total_submissions += self.exercises[exercise].submissions
+        self.total_ungraded += self.exercises[exercise].ungraded
+        self.total_resubmissions += self.exercises[exercise].resubmissions
+        self.total_unreleased += self.exercises[exercise].unreleased
 
 
 class StudentStatus(NamedTuple):
@@ -167,7 +166,7 @@ def submissions_statistics(
             ungraded_ignored = group_assignment_stats.process(
                 submissions_by_group[group]
             )
-            stats[group].calculate()
+            stats[group].calculate(assignment.name)
 
             # Print assignment stats
             if is_verbose and len(ungraded_ignored) != 0:
