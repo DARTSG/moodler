@@ -123,7 +123,7 @@ def submissions_statistics(
     """
     logger.info("Showing ungraded submissions for course %s", course_id)
 
-    assignments = get_assignments(course_id)
+    assignments = get_assignments(course_id) or []
     group_names = [group.name for group in groups] if groups else ["null"]
     user_group_map = get_user_group_map(course_id)
     users_map = get_students(course_id)
