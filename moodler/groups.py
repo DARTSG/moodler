@@ -44,6 +44,9 @@ def get_user_group_map(course_id: int):
         for course_group in get_course_groups(course_id)
     }
 
+    if not groups:
+        return ["null"], {}
+
     group_users = get_group_users(list(groups.keys()))
 
     mapping = {}
