@@ -32,10 +32,10 @@ jobs:
           poetry install
       - name: pytest
         env:
-          TOKEN: ""
-          URL: ""
-          MOODLE_USERNAME: ""
-          MOODLE_PASSWORD: ""
+          TOKEN: "1234567890abcde"
+          URL: "http://127.0.0.1"
+          MOODLE_USERNAME: "username"
+          MOODLE_PASSWORD: "password"
         run: |
           poetry run pytest tests/
       - name: isort
