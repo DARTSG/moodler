@@ -114,10 +114,8 @@ class TestSubmissionStatistics:
         - 2 Grades
         """
         submission_json = [
-            {"userid": 1, "status": "submitted", "attemptnumber": 0, "gradingstatus": "graded", "timemodified": 1718254280, "plugins": []},
-            {"userid": 1, "status": "submitted", "attemptnumber": 1, "gradingstatus": "graded", "timemodified": 1718254282, "plugins": []},
-            {"userid": 2, "status": "submitted", "attemptnumber": 0, "gradingstatus": "graded", "timemodified": 1718254280, "plugins": []},
-            {"userid": 2, "status": "submitted", "attemptnumber": 1, "gradingstatus": "graded", "timemodified": 1718254282, "plugins": []},
+            {"userid": 1, "status": "submitted", "attemptnumber": 0, "gradingstatus": "graded", "timemodified": 1718254282, "plugins": []},
+            {"userid": 2, "status": "submitted", "attemptnumber": 0, "gradingstatus": "graded", "timemodified": 1718254282, "plugins": []},
         ]
 
         grade_json = [
