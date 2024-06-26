@@ -48,7 +48,28 @@ class NoGroups:
         )
     }
 
-    GRADED_SUBMISSIONS = {}
+    GRADED_SUBMISSIONS = {
+        "null": SubmissionStatistics(
+            total_submissions=4,
+            total_ungraded=0,
+            total_resubmissions=0,
+            total_unreleased=0,
+            exercises={
+                "Assignment 1": ExerciseStatistics(
+                    submissions=2,
+                    ungraded=0,
+                    resubmissions=0,
+                    unreleased=0
+                ),
+                "Assignment 2": ExerciseStatistics(
+                    submissions=2,
+                    ungraded=0,
+                    resubmissions=0,
+                    unreleased=0
+                ),
+            }
+        )
+    }
 
     RESUBMISSIONS = {}
 
@@ -142,7 +163,48 @@ class WithGroups:
         )
     }
 
-    GRADED_SUBMISSIONS = {}
+    GRADED_SUBMISSIONS = {
+        "Group 1": SubmissionStatistics(
+            total_submissions=2,
+            total_ungraded=0,
+            total_resubmissions=0,
+            total_unreleased=0,
+            exercises={
+                "Assignment 1": ExerciseStatistics(
+                    submissions=1,
+                    ungraded=0,
+                    resubmissions=0,
+                    unreleased=0
+                ),
+                "Assignment 2": ExerciseStatistics(
+                    submissions=1,
+                    ungraded=0,
+                    resubmissions=0,
+                    unreleased=0
+                ),
+            }
+        ),
+        "Group 2": SubmissionStatistics(
+            total_submissions=2,
+            total_ungraded=0,
+            total_resubmissions=0,
+            total_unreleased=0,
+            exercises={
+                "Assignment 1": ExerciseStatistics(
+                    submissions=1,
+                    ungraded=0,
+                    resubmissions=0,
+                    unreleased=0
+                ),
+                "Assignment 2": ExerciseStatistics(
+                    submissions=1,
+                    ungraded=0,
+                    resubmissions=0,
+                    unreleased=0
+                ),
+            }
+        )
+    }
 
     RESUBMISSIONS = {}
 
