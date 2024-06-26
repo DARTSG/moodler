@@ -42,6 +42,7 @@ class TestSubmissionStatistics:
 
         mocker.patch("moodler.assignment.get_assignments_by_field", return_value=assignments)
         mocker.patch("moodler.groups.get_course_groups", return_value=groups)
+        mocker.patch("moodler.groups.get_group_users", return_value=self.group_users)
         mocker.patch("moodler.students.core_enrol_get_enrolled_users", return_value={})
 
         assert submissions_statistics(1, groups) == expected_result
