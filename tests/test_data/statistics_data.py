@@ -94,7 +94,28 @@ class NoGroups:
         )
     }
 
-    UNRELEASED_GRADES = {}
+    UNRELEASED_GRADES = {
+        "null": SubmissionStatistics(
+            total_submissions=4,
+            total_ungraded=0,
+            total_resubmissions=0,
+            total_unreleased=4,
+            exercises={
+                "Assignment 1": ExerciseStatistics(
+                    submissions=2,
+                    ungraded=0,
+                    resubmissions=0,
+                    unreleased=2
+                ),
+                "Assignment 2": ExerciseStatistics(
+                    submissions=2,
+                    ungraded=0,
+                    resubmissions=0,
+                    unreleased=2
+                ),
+            }
+        )
+    }
 
 
 class WithGroups:
@@ -270,4 +291,45 @@ class WithGroups:
         )
     }
 
-    UNRELEASED_GRADES = {}
+    UNRELEASED_GRADES = {
+        "Group 1": SubmissionStatistics(
+            total_submissions=2,
+            total_ungraded=0,
+            total_resubmissions=0,
+            total_unreleased=2,
+            exercises={
+                "Assignment 1": ExerciseStatistics(
+                    submissions=1,
+                    ungraded=0,
+                    resubmissions=0,
+                    unreleased=1
+                ),
+                "Assignment 2": ExerciseStatistics(
+                    submissions=1,
+                    ungraded=0,
+                    resubmissions=0,
+                    unreleased=1
+                ),
+            }
+        ),
+        "Group 2": SubmissionStatistics(
+            total_submissions=2,
+            total_ungraded=0,
+            total_resubmissions=0,
+            total_unreleased=2,
+            exercises={
+                "Assignment 1": ExerciseStatistics(
+                    submissions=1,
+                    ungraded=0,
+                    resubmissions=0,
+                    unreleased=1
+                ),
+                "Assignment 2": ExerciseStatistics(
+                    submissions=1,
+                    ungraded=0,
+                    resubmissions=0,
+                    unreleased=1
+                ),
+            }
+        ),
+    }
