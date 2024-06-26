@@ -102,7 +102,6 @@ class TestSubmissionStatistics:
 
         assert submissions_statistics(1, groups) == expected_result
 
-    @pytest.mark.skip(reason="Not implemented yet")
     @pytest.mark.parametrize("groups, expected_result", [
         ([], NoGroups.RESUBMISSIONS),
         (groups, WithGroups.RESUBMISSIONS),
@@ -110,7 +109,32 @@ class TestSubmissionStatistics:
     def test_resubmissions(self, mocker, groups, expected_result):
         """
         Course that contains submissions after previous submissions have been graded
+
+        - 4 Submissions
+        - 2 Grades
         """
+        submission_json = [
+            {"userid": 1, "status": "submitted", "attemptnumber": 0, "gradingstatus": "graded", "timemodified": 1718254280, "plugins": []},
+            {"userid": 1, "status": "submitted", "attemptnumber": 1, "gradingstatus": "graded", "timemodified": 1718254282, "plugins": []},
+            {"userid": 2, "status": "submitted", "attemptnumber": 0, "gradingstatus": "graded", "timemodified": 1718254280, "plugins": []},
+            {"userid": 2, "status": "submitted", "attemptnumber": 1, "gradingstatus": "graded", "timemodified": 1718254282, "plugins": []},
+        ]
+
+        grade_json = [
+            {"userid": 1, "timemodified": 1718254281, "grade":100},
+            {"userid": 2, "timemodified": 1718254281, "grade":100},
+        ]
+
+        assignments = [
+            Assignment(assignment,submission_json,grade_json)
+            for assignment in self.assignment_json
+        ]
+
+        mocker.patch("moodler.assignment.get_assignments_by_field", return_value=assignments)
+        mocker.patch("moodler.groups.get_course_groups", return_value=groups)
+        mocker.patch("moodler.groups.get_group_users", return_value=self.group_users)
+        mocker.patch("moodler.students.core_enrol_get_enrolled_users", return_value={})
+
         assert submissions_statistics(1, groups) == expected_result
 
     @pytest.mark.skip(reason="Not implemented yet")
