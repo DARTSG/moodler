@@ -26,5 +26,5 @@ def get_course_exercises(courseid: int):
             if module["modname"] in ["assign", "lti"]:
                 exercise_map[module["modname"]][module["instance"]] = module["name"]
                 exercise_map["order"].append(module["instance"])
-    
+
     return dict(exercise_map)
