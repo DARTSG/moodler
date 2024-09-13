@@ -106,14 +106,14 @@ class Submission(object):
         )
 
 
-def mod_assign_get_submissions(assignment_ids):
+def mod_assign_get_submissions(assignment_ids, **kwargs):
     """
     Returns the submissions for the given assignments in a dict
     mapping assignment id to submissions
     {id: [..]}
     """
     response = call_moodle_api(
-        "mod_assign_get_submissions", assignmentids=assignment_ids
+        "mod_assign_get_submissions", assignmentids=assignment_ids, **kwargs
     )
 
     submissions = {}
