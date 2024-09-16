@@ -25,6 +25,11 @@ def get_course_groups(courseid: int) -> List[Group]:
 def get_group_users(groupids: List[int]) -> List[Dict[str, Any]]:
     """
     Retrieve the users in the groups
+
+    Response:
+    [
+        {"groupid": 1, "userids": [1, 2]},
+    ]
     """
     response = call_moodle_api(
         "core_group_get_group_members",
@@ -35,7 +40,8 @@ def get_group_users(groupids: List[int]) -> List[Dict[str, Any]]:
 
 def get_user_group_map(course_id: int) -> Dict[str, List[str]]:
     """
-    Maps the user to their groups
+    Maps the user to their groups, returns an empty dictionary if there are no
+    groups in the course
 
     {
         "User ID": ["Group Name"]
