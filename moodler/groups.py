@@ -1,15 +1,17 @@
+from typing import Any, Dict, List
+
 from moodler.moodle_api import call_moodle_api
 
 
 class Group(object):
-    def __init__(self, group_json):
-        self.group_id = group_json["id"]
-        self.name = group_json["name"]
+    def __init__(self, group_json: Dict[str, Any]):
+        self.group_id: int = group_json["id"]
+        self.name: str = group_json["name"]
 
-        self._group_json = group_json
+        self._group_json: Dict[str, Any] = group_json
 
 
-def get_course_groups(courseid: int):
+def get_course_groups(courseid: int) -> List[Group]:
     """
     Retrieve the groups in a course
     """
@@ -20,9 +22,14 @@ def get_course_groups(courseid: int):
     return [Group(course_group) for course_group in course_groups]
 
 
-def get_group_users(groupids: list[int]):
+def get_group_users(groupids: List[int]) -> List[Dict[str, Any]]:
     """
     Retrieve the users in the groups
+
+    Response:
+    [
+        {"groupid": 1, "userids": [1, 2]},
+    ]
     """
     response = call_moodle_api(
         "core_group_get_group_members",
@@ -31,9 +38,10 @@ def get_group_users(groupids: list[int]):
     return response
 
 
-def get_user_group_map(course_id: int):
+def get_user_group_map(course_id: int) -> Dict[str, List[str]]:
     """
-    Maps the user to their groups
+    Maps the user to their groups, returns an empty dictionary if there are no
+    groups in the course
 
     {
         "User ID": ["Group Name"]
@@ -45,7 +53,7 @@ def get_user_group_map(course_id: int):
     }
 
     if not groups:
-        return ["null"], {}
+        return {}
 
     group_users = get_group_users(list(groups.keys()))
 
