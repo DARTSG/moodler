@@ -53,7 +53,7 @@ def get_user_group_map(course_id: int) -> Dict[str, List[str]]:
     }
 
     if not groups:
-        return ["null"], {}
+        return {}
 
     group_users = get_group_users(list(groups.keys()))
 
