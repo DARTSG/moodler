@@ -104,3 +104,15 @@ def get_user_name(user_id):
     response_json = response[0]
 
     return response_json["firstname"] + " " + response_json["lastname"]
+
+
+def get_students_raw(courseid: int):
+    """
+    Get the raw data of students in the course
+    """
+    students = [
+        user
+        for user in core_enrol_get_enrolled_users(courseid)
+        if any(role.get("shortname") == "student" for role in user["roles"])
+    ] 
+    return students
