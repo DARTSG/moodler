@@ -114,5 +114,5 @@ def get_students_raw(courseid: int):
         user
         for user in core_enrol_get_enrolled_users(courseid)
         if any(role.get("shortname") == "student" for role in user["roles"])
-    ] 
+    ]
     return students
