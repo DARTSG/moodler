@@ -1,6 +1,6 @@
 import logging
 from collections import defaultdict
-from typing import Iterable, NamedTuple, Optional
+from typing import Iterable, NamedTuple, Optional, Dict, List
 
 from parse import parse
 
@@ -126,7 +126,41 @@ def get_assignments_by_section(course_id, sections_names=None, assignments_names
     return assignments_by_section
 
 
-def get_exercises(courseid: int) -> list[dict[int, str, str]]:
+def get_exercises_by_topic(courseid: int) -> Dict[str, List[Dict[str, int | str]]]:
+    """
+    Retrieves the LTI exercises and assignments for a given course by topic.
+
+    Return Example:
+    {
+        "Topic 1": {"id": 1, "name": "Assignment 1", "type": "assign"},
+        "Topic 2": {"id": 2, "name": "LTI 1", "type": "lti"},
+    }
+    """
+    course_content = core_course_get_contents(courseid)
+    course_exercises = {}
+    for section in course_content:
+        # Ignore topics with no exercises
+        if not section["modules"]:
+            continue
+
+        # Save assignments or LTI exercises only
+        section_exercises = [
+            {
+                "id": module["instance"],
+                "name": module["name"],
+                "type": module["modname"],
+            }
+            for module in section["modules"]
+            if module["modname"] in ["assign", "lti"]
+        ]
+
+        if section_exercises:
+            course_exercises[section["name"]] = section_exercises
+
+    return course_exercises
+
+
+def get_exercises(courseid: int) -> List[Dict[str, int | str]]:
     """
     Retrieves the LTI exercises and assignments for a given course in order.
 
@@ -141,20 +175,5 @@ def get_exercises(courseid: int) -> list[dict[int, str, str]]:
         {"id": 2, "name": "LTI 1", "type": "lti"},
     ]
     """
-    course_content = core_course_get_contents(courseid)
-    exercises = []
-    for section in course_content:
-        if not section["modules"]:
-            continue
-
-        for module in section["modules"]:
-            if module["modname"] in ["assign", "lti"]:
-                exercises.append(
-                    {
-                        "id": module["instance"],
-                        "name": module["name"],
-                        "type": module["modname"],
-                    }
-                )
-
-    return exercises
+    exercises_by_topic = get_exercises_by_topic(courseid)
+    return [exercise for topic in exercises_by_topic for exercise in exercises_by_topic[topic]]
