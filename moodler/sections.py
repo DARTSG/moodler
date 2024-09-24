@@ -119,3 +119,37 @@ def get_assignments_by_section(course_id, sections_names=None, assignments_names
         assignments_by_section[section_name].append(assignment)
 
     return assignments_by_section
+
+
+def get_exercises(courseid: int) -> list[dict[int, str, str]]:
+    """
+    Retrieves the LTI exercises and assignments for a given course in order.
+
+    Returns an ordered list of dictionaries that contains
+    - "id": ID of exercise in the LMS
+    - "name": Name of exercise
+    - "type": Type of exercise ("assign" | "lti")
+
+    Example:
+    [
+        {"id": 1, "name": "Assignment 1", "type": "assign"},
+        {"id": 2, "name": "LTI 1", "type": "lti"},
+    ]
+    """
+    course_content = core_course_get_contents(courseid)
+    exercises = []
+    for section in course_content:
+        if not section["modules"]:
+            continue
+
+        for module in section["modules"]:
+            if module["modname"] in ["assign", "lti"]:
+                exercises.append(
+                    {
+                        "id": module["instance"],
+                        "name": module["name"],
+                        "type": module["modname"],
+                    }
+                )
+
+    return exercises
