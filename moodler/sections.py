@@ -50,7 +50,12 @@ def list_courses(course_prefix: str = "") -> Iterable[Course]:
         course_name = full_name
         if course_prefix:
             course_name_format = f"{course_prefix} - {{course_name}}"
-            course_name = parse(course_name_format, full_name)["course_name"]
+            course_name_match = parse(course_name_format, full_name)
+
+            if course_name_match is None:
+                continue
+
+            course_name = course_name_match["course_name"]
 
         yield Course(course["id"], prefix=course_prefix, name=course_name)
 
