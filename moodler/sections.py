@@ -1,6 +1,6 @@
 import logging
 from collections import defaultdict
-from typing import Iterable, NamedTuple, Optional, Dict, List
+from typing import Dict, Iterable, List, NamedTuple, Optional
 
 from parse import parse
 
@@ -176,4 +176,8 @@ def get_exercises(courseid: int) -> List[Dict[str, int | str]]:
     ]
     """
     exercises_by_topic = get_exercises_by_topic(courseid)
-    return [exercise for topic in exercises_by_topic for exercise in exercises_by_topic[topic]]
+    return [
+        exercise
+        for topic in exercises_by_topic
+        for exercise in exercises_by_topic[topic]
+    ]
