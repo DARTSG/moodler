@@ -18,6 +18,12 @@ class Course(NamedTuple):
     @property
     def full_name(self):
         return f"{self.prefix} {self.name}"
+    
+
+class Exercise(NamedTuple):
+    id: int
+    name: str
+    type: str
 
 
 def core_course_get_courses():
@@ -126,15 +132,9 @@ def get_assignments_by_section(course_id, sections_names=None, assignments_names
     return assignments_by_section
 
 
-def get_exercises_by_topic(courseid: int) -> Dict[str, List[Dict[str, int | str]]]:
+def get_exercises_by_topic(courseid: int) -> Dict[str, List[Exercise]]:
     """
     Retrieves the LTI exercises and assignments for a given course by topic.
-
-    Return Example:
-    {
-        "Topic 1": {"id": 1, "name": "Assignment 1", "type": "assign"},
-        "Topic 2": {"id": 2, "name": "LTI 1", "type": "lti"},
-    }
     """
     course_content = core_course_get_contents(courseid)
     course_exercises = {}
@@ -145,11 +145,11 @@ def get_exercises_by_topic(courseid: int) -> Dict[str, List[Dict[str, int | str]
 
         # Save assignments or LTI exercises only
         section_exercises = [
-            {
-                "id": module["instance"],
-                "name": module["name"],
-                "type": module["modname"],
-            }
+            Exercise(
+                module["instance"],
+                module["name"],
+                module["modname"],
+            )
             for module in section["modules"]
             if module["modname"] in ["assign", "lti"]
         ]
@@ -160,20 +160,11 @@ def get_exercises_by_topic(courseid: int) -> Dict[str, List[Dict[str, int | str]
     return course_exercises
 
 
-def get_exercises(courseid: int) -> List[Dict[str, int | str]]:
+def get_exercises(courseid: int) -> List[Exercise]:
     """
     Retrieves the LTI exercises and assignments for a given course in order.
 
-    Returns an ordered list of dictionaries that contains
-    - "id": ID of exercise in the LMS
-    - "name": Name of exercise
-    - "type": Type of exercise ("assign" | "lti")
-
-    Example:
-    [
-        {"id": 1, "name": "Assignment 1", "type": "assign"},
-        {"id": 2, "name": "LTI 1", "type": "lti"},
-    ]
+    Returns an ordered list of Exercise objects
     """
     exercises_by_topic = get_exercises_by_topic(courseid)
     return [
