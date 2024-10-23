@@ -161,7 +161,7 @@ def get_exercises_by_topic(courseid: int) -> Dict[str, List[Exercise]]:
     course_content = core_course_get_contents(courseid)
     course_exercises = {}
     for section in course_content:
-        # Ignore topics with no exercises
+        # Ignore topics with no modules
         if not section["modules"]:
             continue
 
