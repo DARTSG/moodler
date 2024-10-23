@@ -5,7 +5,7 @@ from typing import Dict, Iterable, List, NamedTuple, Optional
 from parse import parse
 
 from moodler.assignment import get_assignments
-from moodler.moodle_api import call_moodle_api, MoodleAPIException
+from moodler.moodle_api import MoodleAPIException, call_moodle_api
 
 logger = logging.getLogger(__name__)
 

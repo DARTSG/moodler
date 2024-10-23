@@ -1,6 +1,6 @@
 import logging
 
-from moodler.moodle_api import call_moodle_api, MoodleAPIException
+from moodler.moodle_api import MoodleAPIException, call_moodle_api
 from moodler.moodle_exception import MoodlerException
 
 logger = logging.getLogger(__name__)
