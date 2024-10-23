@@ -1,5 +1,4 @@
 import logging
-
 from typing import NamedTuple
 
 from moodler.moodle_api import MoodleAPIException, call_moodle_api
