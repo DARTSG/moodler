@@ -1,6 +1,6 @@
 import logging
 
-from moodler.moodle_api import call_moodle_api
+from moodler.moodle_api import call_moodle_api, MoodleAPIException
 from moodler.moodle_exception import MoodlerException
 
 logger = logging.getLogger(__name__)
@@ -12,10 +12,15 @@ class TwoStudentsFoundConflict(MoodlerException):
 
 def core_enrol_get_enrolled_users(course_id):
     """
-    Get enrolled users by course id
+    Get enrolled users by course id, returns a list of enrolled users
     """
-    response = call_moodle_api("core_enrol_get_enrolled_users", courseid=course_id)
-
+    response = call_moodle_api(
+        "core_enrol_get_enrolled_users", courseid=course_id
+    )
+    if not isinstance(response, list):
+        raise MoodleAPIException(
+            "core_enrol_get_enrolled_users does not return a list."
+        )
     return response
 
 

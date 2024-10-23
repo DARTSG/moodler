@@ -5,7 +5,7 @@ from typing import Dict, Iterable, List, NamedTuple, Optional
 from parse import parse
 
 from moodler.assignment import get_assignments
-from moodler.moodle_api import call_moodle_api
+from moodler.moodle_api import call_moodle_api, MoodleAPIException
 
 logger = logging.getLogger(__name__)
 
@@ -28,16 +28,26 @@ class Exercise(NamedTuple):
 
 def core_course_get_courses():
     """
-    Returns a tuple of ids and course names
+    Returns a list of courses
     """
-    return call_moodle_api("core_course_get_courses")
+    response = call_moodle_api("core_course_get_courses")
+    if not isinstance(response, list):
+        raise MoodleAPIException(
+            "core_course_get_courses does not return a list."
+        )
+    return response
 
 
 def core_course_get_contents(course_id):
     """
-    Returns the structure of the course with all resources and topics
+    Returns the structure of the course with all resources and topics in a list
     """
-    return call_moodle_api("core_course_get_contents", courseid=course_id)
+    response = call_moodle_api("core_course_get_contents", courseid=course_id)
+    if not isinstance(response, list):
+        raise MoodleAPIException(
+            "core_course_get_contents does not return a list."
+        )
+    return response
 
 
 def list_courses(course_prefix: str = "") -> Iterable[Course]:
