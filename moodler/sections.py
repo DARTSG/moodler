@@ -167,8 +167,7 @@ def get_exercises(courseid: int) -> List[Exercise]:
     Returns an ordered list of Exercise objects
     """
     exercises_by_topic = get_exercises_by_topic(courseid)
-    return [
-        exercise
-        for topic in exercises_by_topic
-        for exercise in exercises_by_topic[topic]
-    ]
+    course_exercises = []
+    for exercises in exercises_by_topic.values():
+        course_exercises.extend(exercises)
+    return course_exercises
