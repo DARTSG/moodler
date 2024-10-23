@@ -18,7 +18,7 @@ class Course(NamedTuple):
     @property
     def full_name(self):
         return f"{self.prefix} {self.name}"
-    
+
 
 class Exercise(NamedTuple):
     id: int
@@ -84,7 +84,9 @@ def get_course_by_id(course_id: str) -> Optional[Course]:
     return None
 
 
-def get_assignments_by_section(course_id, sections_names=None, assignments_names=None):
+def get_assignments_by_section(
+    course_id, sections_names=None, assignments_names=None
+):
     """
     Retrieving assignments by sections.
     """
@@ -102,19 +104,27 @@ def get_assignments_by_section(course_id, sections_names=None, assignments_names
 
         if missing_sections:
             logger.error(
-                "Could not find the following sections: %s", list(missing_sections)
+                "Could not find the following sections: %s",
+                list(missing_sections),
             )
 
     if assignments_names is not None:
         # Handle missing assignments
         found_assignments = set(
-            [module["name"] for section in sections for module in section["modules"]]
+            [
+                module["name"]
+                for section in sections
+                for module in section["modules"]
+            ]
         )
 
-        missing_assignments = set(assignments_names).difference(found_assignments)
+        missing_assignments = set(assignments_names).difference(
+            found_assignments
+        )
         if missing_assignments:
             logger.error(
-                "Could not find the following assignments: %s", missing_assignments
+                "Could not find the following assignments: %s",
+                missing_assignments,
             )
 
     assignment_id_to_section = {}
@@ -132,7 +142,9 @@ def get_assignments_by_section(course_id, sections_names=None, assignments_names
 
             assignment_id_to_section[module["id"]] = section["name"]
 
-    assignments = get_assignments(course_id, list(assignment_id_to_section.keys()))
+    assignments = get_assignments(
+        course_id, list(assignment_id_to_section.keys())
+    )
     assignments_by_section = defaultdict(list)
 
     for assignment in assignments:
