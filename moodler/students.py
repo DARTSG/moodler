@@ -1,5 +1,7 @@
 import logging
 
+from typing import NamedTuple
+
 from moodler.moodle_api import MoodleAPIException, call_moodle_api
 from moodler.moodle_exception import MoodlerException
 
@@ -8,6 +10,12 @@ logger = logging.getLogger(__name__)
 
 class TwoStudentsFoundConflict(MoodlerException):
     pass
+
+
+class Student(NamedTuple):
+    id: int
+    name: str
+    group: str
 
 
 def core_enrol_get_enrolled_users(course_id):
