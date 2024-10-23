@@ -21,9 +21,7 @@ def core_enrol_get_enrolled_users(course_id):
     """
     Get enrolled users by course id, returns a list of enrolled users
     """
-    response = call_moodle_api(
-        "core_enrol_get_enrolled_users", courseid=course_id
-    )
+    response = call_moodle_api("core_enrol_get_enrolled_users", courseid=course_id)
     if not isinstance(response, list):
         raise MoodleAPIException(
             "core_enrol_get_enrolled_users does not return a list."

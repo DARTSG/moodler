@@ -9,9 +9,7 @@ def gradereport_user_get_grade_items(courseid: int):
     """
     Get the grade report of all the users by course id
     """
-    gradereport = call_moodle_api(
-        "gradereport_user_get_grade_items", courseid=courseid
-    )
+    gradereport = call_moodle_api("gradereport_user_get_grade_items", courseid=courseid)
 
     # Validate grade report
     if "usergrades" not in gradereport or "warnings" not in gradereport:
