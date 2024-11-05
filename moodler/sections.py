@@ -46,7 +46,7 @@ def core_course_get_contents(course_id):
     return response
 
 
-def list_courses(course_prefix: str = "") -> Iterable[Course]:
+def get_courses(course_prefix: str = "") -> Iterable[Course]:
     """
     List courses in moodle, optionally filter by course_prefix
     """
@@ -73,7 +73,7 @@ def list_courses(course_prefix: str = "") -> Iterable[Course]:
 
 
 def get_course_by_id(course_id: str) -> Optional[Course]:
-    for course in list_courses():
+    for course in get_courses():
         if course.id == course_id:
             return course
 
