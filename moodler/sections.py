@@ -32,7 +32,9 @@ def core_course_get_courses():
     """
     response = call_moodle_api("core_course_get_courses")
     if not isinstance(response, list):
-        raise MoodleAPIException("core_course_get_courses does not return a list.")
+        raise MoodleAPIException(
+            "core_course_get_courses does not return a list."
+        )
     return response
 
 
@@ -42,7 +44,9 @@ def core_course_get_contents(course_id):
     """
     response = call_moodle_api("core_course_get_contents", courseid=course_id)
     if not isinstance(response, list):
-        raise MoodleAPIException("core_course_get_contents does not return a list.")
+        raise MoodleAPIException(
+            "core_course_get_contents does not return a list."
+        )
     return response
 
 
@@ -80,7 +84,9 @@ def get_course_by_id(course_id: str) -> Optional[Course]:
     return None
 
 
-def get_assignments_by_section(course_id, sections_names=None, assignments_names=None):
+def get_assignments_by_section(
+    course_id, sections_names=None, assignments_names=None
+):
     """
     Retrieving assignments by sections.
     """
@@ -105,10 +111,16 @@ def get_assignments_by_section(course_id, sections_names=None, assignments_names
     if assignments_names is not None:
         # Handle missing assignments
         found_assignments = set(
-            [module["name"] for section in sections for module in section["modules"]]
+            [
+                module["name"]
+                for section in sections
+                for module in section["modules"]
+            ]
         )
 
-        missing_assignments = set(assignments_names).difference(found_assignments)
+        missing_assignments = set(assignments_names).difference(
+            found_assignments
+        )
         if missing_assignments:
             logger.error(
                 "Could not find the following assignments: %s",
@@ -130,7 +142,9 @@ def get_assignments_by_section(course_id, sections_names=None, assignments_names
 
             assignment_id_to_section[module["id"]] = section["name"]
 
-    assignments = get_assignments(course_id, list(assignment_id_to_section.keys()))
+    assignments = get_assignments(
+        course_id, list(assignment_id_to_section.keys())
+    )
     assignments_by_section = defaultdict(list)
 
     for assignment in assignments:
