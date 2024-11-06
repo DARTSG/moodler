@@ -1,6 +1,7 @@
 import logging
+from typing import NamedTuple
 
-from moodler.moodle_api import call_moodle_api
+from moodler.moodle_api import MoodleAPIException, call_moodle_api
 from moodler.moodle_exception import MoodlerException
 
 logger = logging.getLogger(__name__)
@@ -10,12 +11,21 @@ class TwoStudentsFoundConflict(MoodlerException):
     pass
 
 
+class Student(NamedTuple):
+    id: int
+    name: str
+    group: str
+
+
 def core_enrol_get_enrolled_users(course_id):
     """
-    Get enrolled users by course id
+    Get enrolled users by course id, returns a list of enrolled users
     """
     response = call_moodle_api("core_enrol_get_enrolled_users", courseid=course_id)
-
+    if not isinstance(response, list):
+        raise MoodleAPIException(
+            "core_enrol_get_enrolled_users does not return a list."
+        )
     return response
 
 
@@ -104,3 +114,15 @@ def get_user_name(user_id):
     response_json = response[0]
 
     return response_json["firstname"] + " " + response_json["lastname"]
+
+
+def get_students_raw(courseid: int):
+    """
+    Get the raw data of students in the course
+    """
+    students = [
+        user
+        for user in core_enrol_get_enrolled_users(courseid)
+        if any(role.get("shortname") == "student" for role in user["roles"])
+    ]
+    return students

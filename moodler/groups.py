@@ -1,6 +1,7 @@
 from typing import Any, Dict, List
 
 from moodler.moodle_api import call_moodle_api
+from moodler.students import Student, get_students
 
 
 class Group(object):
@@ -63,3 +64,18 @@ def get_user_group_map(course_id: int) -> Dict[str, List[str]]:
             mapping[userid] = groups[group["groupid"]]
 
     return mapping
+
+
+def get_students_with_groups(course_id: int) -> List[Student]:
+    """
+    Retrieve the students with their group in the course
+    """
+    group_map = get_user_group_map(course_id)
+    return [
+        Student(
+            id,
+            name,
+            "" if not group_map else group_map[id],
+        )
+        for id, name in get_students(course_id).items()
+    ]
