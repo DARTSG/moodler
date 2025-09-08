@@ -1,5 +1,7 @@
-from moodler.moodle_api import call_moodle_api
 from typing import Dict
+
+from moodler.moodle_api import call_moodle_api
+
 
 class GradeReportException(Exception):
     pass
