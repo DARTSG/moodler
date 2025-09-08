@@ -22,14 +22,19 @@ def gradereport_user_get_grade_items(courseid: int):
 
     return gradereport
 
+
 def gradereport_user_get_grades_table(courseid: int, userid: int) -> Dict:
 
-    gradereport = call_moodle_api("gradereport_user_get_grades_table", courseid=courseid, userid=userid)
+    gradereport = call_moodle_api(
+        "gradereport_user_get_grades_table", courseid=courseid, userid=userid
+    )
 
     if "tables" not in gradereport or not gradereport["tables"]:
         raise GradeReportException("Missing or empty 'tables' in grade report.")
 
     if "tabledata" not in gradereport["tables"][0]:
-        raise GradeReportException("Missing 'tabledata' in first table of grade report.")
+        raise GradeReportException(
+            "Missing 'tabledata' in first table of grade report."
+        )
 
     return gradereport
