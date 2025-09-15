@@ -7,59 +7,44 @@ class GradeReportException(Exception):
     pass
 
 
-def gradereport_user_get_grade_items(courseid: int):
-    """
-    Get the grade report of all the users by course id
-    """
-    try:
-        gradereport = call_moodle_api(
-            "gradereport_user_get_grade_items", courseid=courseid
-        )
-    except MoodleAPITimeoutException:
-        print("Timeout when fetching all grade items, trying by groups...")
-        gradereport = gradereport_user_get_grade_items_by_group(courseid)
-
-    # Validate grade report
+def _validate(gradereport):
     if "usergrades" not in gradereport or "warnings" not in gradereport:
         raise GradeReportException("Incorrect grade report format.")
 
     if gradereport["warnings"]:
         raise GradeReportException(gradereport["warnings"])
+    
 
-    return gradereport
-
-
-def gradereport_user_get_grade_items_by_group(courseid: int):
+def fetch_all(courseid: int):
     """
-    Get the grade report of all the users in course id by groups
+    Get the grade report by all users
+    """
+    print(f"Fetching gradereport for all users...")
+    return call_moodle_api("gradereport_user_get_grade_items", courseid=courseid)
+
+
+def fetch_by_group(courseid: int):
+    """
+    Get the grade report by groups
     """
     gradereport = {"usergrades": [], "warnings": []}
 
-    groups = get_course_groups(courseid)
-    for group in groups:
+    for group in get_course_groups(courseid):
         print(f"Fetching gradereport for group {group.name}...")
-
-        try:
-            group_gradereport = call_moodle_api(
-                "gradereport_user_get_grade_items",
-                courseid=courseid,
-                groupid=group.group_id,
-            )
-        except MoodleAPITimeoutException:
-            print(
-                f"Timeout when fetching grade items for group {group.group_id}, trying by users..."
-            )
-            return gradereport_user_get_grade_items_by_user(courseid)
-
+        group_gradereport = call_moodle_api(
+            "gradereport_user_get_grade_items",
+            courseid=courseid,
+            groupid=group.group_id,
+        )
         gradereport["usergrades"].extend(group_gradereport.get("usergrades", []))
         gradereport["warnings"].extend(group_gradereport.get("warnings", []))
 
     return gradereport
 
 
-def gradereport_user_get_grade_items_by_user(courseid: int):
+def fetch_by_user(courseid: int):
     """
-    Get the grade report of all the users in course id by users
+    Get the grade report by individual users
     """
     gradereport = {"usergrades": [], "warnings": []}
 
@@ -67,17 +52,30 @@ def gradereport_user_get_grade_items_by_user(courseid: int):
     print(f"Fetching gradereport for {len(student_ids)} students individually...")
     for userid in student_ids:
         # TODO: Consider using threading to speed this up
-
-        try:
-            student_gradereport = call_moodle_api(
-                "gradereport_user_get_grade_items", courseid=courseid, userid=userid
-            )
-        except MoodleAPITimeoutException:
-            raise GradeReportException(
-                f"Timeout when fetching grade items for user {userid}, stopping..."
-            )
-
+        student_gradereport = call_moodle_api(
+            "gradereport_user_get_grade_items",
+            courseid=courseid,
+            userid=userid,
+        )
         gradereport["usergrades"].extend(student_gradereport.get("usergrades", []))
         gradereport["warnings"].extend(student_gradereport.get("warnings", []))
 
     return gradereport
+ 
+
+def gradereport_user_get_grade_items(courseid: int):
+    """
+    Get the grade report
+    """
+    strategies = [fetch_all, fetch_by_group, fetch_by_user]
+
+    for strategy in strategies:
+        try:
+            gradereport = strategy(courseid)
+            _validate(gradereport)
+            return gradereport
+        except MoodleAPITimeoutException:
+            print(f"{strategy.__name__} timed out, trying next strategy...")
+            continue
+
+    raise GradeReportException("All strategies failed to fetch grade report.")
