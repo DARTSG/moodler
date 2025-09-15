@@ -1,5 +1,5 @@
-from moodler.moodle_api import call_moodle_api, MoodleAPITimeoutException
 from moodler.groups import get_course_groups
+from moodler.moodle_api import MoodleAPITimeoutException, call_moodle_api
 from moodler.students import get_students
 
 
@@ -12,7 +12,9 @@ def gradereport_user_get_grade_items(courseid: int):
     Get the grade report of all the users by course id
     """
     try:
-        gradereport = call_moodle_api("gradereport_user_get_grade_items", courseid=courseid)
+        gradereport = call_moodle_api(
+            "gradereport_user_get_grade_items", courseid=courseid
+        )
     except MoodleAPITimeoutException:
         print("Timeout when fetching all grade items, trying by groups...")
         gradereport = gradereport_user_get_grade_items_by_group(courseid)
@@ -36,13 +38,19 @@ def gradereport_user_get_grade_items_by_group(courseid: int):
     groups = get_course_groups(courseid)
     for group in groups:
         print(f"Fetching gradereport for group {group.name}...")
-        
+
         try:
-            group_gradereport = call_moodle_api("gradereport_user_get_grade_items", courseid=courseid, groupid=group.group_id)
+            group_gradereport = call_moodle_api(
+                "gradereport_user_get_grade_items",
+                courseid=courseid,
+                groupid=group.group_id,
+            )
         except MoodleAPITimeoutException:
-            print(f"Timeout when fetching grade items for group {group.group_id}, trying by users...")
+            print(
+                f"Timeout when fetching grade items for group {group.group_id}, trying by users..."
+            )
             return gradereport_user_get_grade_items_by_user(courseid)
-        
+
         gradereport["usergrades"].extend(group_gradereport.get("usergrades", []))
         gradereport["warnings"].extend(group_gradereport.get("warnings", []))
 
@@ -61,9 +69,13 @@ def gradereport_user_get_grade_items_by_user(courseid: int):
         # TODO: Consider using threading to speed this up
 
         try:
-            student_gradereport = call_moodle_api("gradereport_user_get_grade_items", courseid=courseid, userid=userid)
+            student_gradereport = call_moodle_api(
+                "gradereport_user_get_grade_items", courseid=courseid, userid=userid
+            )
         except MoodleAPITimeoutException:
-            raise GradeReportException(f"Timeout when fetching grade items for user {userid}, stopping...")
+            raise GradeReportException(
+                f"Timeout when fetching grade items for user {userid}, stopping..."
+            )
 
         gradereport["usergrades"].extend(student_gradereport.get("usergrades", []))
         gradereport["warnings"].extend(student_gradereport.get("warnings", []))
