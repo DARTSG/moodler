@@ -33,14 +33,14 @@ def gradereport_user_get_grade_items_by_group(courseid: int):
     """
     gradereport = {"usergrades": [], "warnings": []}
 
-    group_ids = [group.group_id for group in get_course_groups(courseid)]
-    for group_id in group_ids:
-        print(f"Fetching gradereport for group {group_id}...")
+    groups = get_course_groups(courseid)
+    for group in groups:
+        print(f"Fetching gradereport for group {group.name}...")
         
         try:
-            group_gradereport = call_moodle_api("gradereport_user_get_grade_items", courseid=courseid, groupid=group_id)
+            group_gradereport = call_moodle_api("gradereport_user_get_grade_items", courseid=courseid, groupid=group.group_id)
         except MoodleAPITimeoutException:
-            print(f"Timeout when fetching grade items for group {group_id}, trying by users...")
+            print(f"Timeout when fetching grade items for group {group.group_id}, trying by users...")
             return gradereport_user_get_grade_items_by_user(courseid)
         
         gradereport["usergrades"].extend(group_gradereport.get("usergrades", []))
