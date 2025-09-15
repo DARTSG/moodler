@@ -13,13 +13,13 @@ def _validate(gradereport):
 
     if gradereport["warnings"]:
         raise GradeReportException(gradereport["warnings"])
-    
+
 
 def fetch_all(courseid: int):
     """
     Get the grade report by all users
     """
-    print(f"Fetching gradereport for all users...")
+    print("Fetching gradereport for all users...")
     return call_moodle_api("gradereport_user_get_grade_items", courseid=courseid)
 
 
@@ -61,7 +61,7 @@ def fetch_by_user(courseid: int):
         gradereport["warnings"].extend(student_gradereport.get("warnings", []))
 
     return gradereport
- 
+
 
 def gradereport_user_get_grade_items(courseid: int):
     """
