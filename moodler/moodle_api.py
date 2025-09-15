@@ -5,6 +5,7 @@ This file should contain general logic for every Moodle API call.
 import logging
 
 import requests
+from requests.exceptions import HTTPError
 
 from moodler.consts import TOKEN, URL
 from moodler.moodle_exception import MoodlerException
@@ -20,6 +21,10 @@ RESPONSE_WARNINGS_KEY = "warnings"
 
 
 class MoodleAPIException(MoodlerException):
+    pass
+
+
+class MoodleAPITimeoutException(MoodlerException):
     pass
 
 
@@ -79,8 +84,22 @@ def call_moodle_api(moodle_function, **kwargs):
     """
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
     data = prepare_data(moodle_function, **kwargs)
-    response = requests.post(URL, data, headers=headers)
-    response.raise_for_status()
+
+    try:
+        response = requests.post(URL, data, headers=headers)
+        response.raise_for_status()
+    except HTTPError as e:
+        if response.status_code == 504:
+            raise MoodleAPITimeoutException(
+                f"Request to Moodle API '{moodle_function}' timed out with status code {response.status_code}. "
+                "This may be due to a large amount of data being requested. "
+                "Consider fetching data in smaller chunks."
+            ) from e
+
+        raise MoodleAPIException(
+            f"Failed calling api '{moodle_function}' with status code {response.status_code}"
+        ) from e
+
     try:
         response_json = response.json()
     except ValueError as e:
