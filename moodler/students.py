@@ -82,7 +82,10 @@ def get_students(course_id):
     output_enrolled_students: dict[int, str] = {}
 
     for enrolled in core_enrol_get_enrolled_users(course_id):
-        if enrolled["roles"][0]["shortname"] != "student":
+        roles = enrolled.get("roles", [])
+        shortnames = [role.get("shortname") for role in roles]
+
+        if "student" not in shortnames:
             continue
 
         output_enrolled_students[enrolled["id"]] = enrolled["fullname"]
