@@ -216,24 +216,24 @@ files = [
 
 [[package]]
 name = "environs"
-version = "9.5.0"
+version = "14.3.0"
 description = "simplified environment variable parsing"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.9"
 files = [
-    {file = "environs-9.5.0-py2.py3-none-any.whl", hash = "sha256:1e549569a3de49c05f856f40bce86979e7d5ffbbc4398e7f338574c220189124"},
-    {file = "environs-9.5.0.tar.gz", hash = "sha256:a76307b36fbe856bdca7ee9161e6c466fd7fcffc297109a118c59b54e27e30c9"},
+    {file = "environs-14.3.0-py3-none-any.whl", hash = "sha256:91e4c4ea964be277855cdd83a588f6375f10fad9fa452660ecb9f503c230f26a"},
+    {file = "environs-14.3.0.tar.gz", hash = "sha256:20672d92db325ce8114872b1989104eb84f083486325b5a44bcddff56472a384"},
 ]
 
 [package.dependencies]
-marshmallow = ">=3.0.0"
+marshmallow = ">=3.18.0"
 python-dotenv = "*"
+typing-extensions = {version = "*", markers = "python_version < \"3.11\""}
 
 [package.extras]
-dev = ["dj-database-url", "dj-email-url", "django-cache-url", "flake8 (==4.0.1)", "flake8-bugbear (==21.9.2)", "mypy (==0.910)", "pre-commit (>=2.4,<3.0)", "pytest", "tox"]
+dev = ["environs[tests]", "pre-commit (>=4.0,<5.0)", "tox"]
 django = ["dj-database-url", "dj-email-url", "django-cache-url"]
-lint = ["flake8 (==4.0.1)", "flake8-bugbear (==21.9.2)", "mypy (==0.910)", "pre-commit (>=2.4,<3.0)"]
-tests = ["dj-database-url", "dj-email-url", "django-cache-url", "pytest"]
+tests = ["backports.strenum", "environs[django]", "packaging", "pytest"]
 
 [[package]]
 name = "exceptiongroup"
@@ -595,4 +595,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "6d2faba2ca0cfef763aa497a85e2a9ea3dfb5b9acf993cc7184cd02b47b20374"
+content-hash = "60ef1d432143d08c26efd0f66c4e27ce26b1875a4f7c284d73fcdf5a9d2b3363"
