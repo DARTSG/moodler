@@ -82,6 +82,7 @@ def get_students(course_id):
     output_enrolled_students: dict[int, str] = {}
 
     for enrolled in core_enrol_get_enrolled_users(course_id):
+        # Users might be enrolled into the course without any roles
         roles = enrolled.get("roles", [])
         shortnames = [role.get("shortname") for role in roles]
 
