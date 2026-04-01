@@ -30,7 +30,7 @@ class StudentAttendance:
     firstname: str
     lastname: str
     group: str  # Name of the course group the student belongs to
-    status: Literal["Present", "Absent", "Excused"]
+    status: str
     remarks: str
 
 
@@ -83,7 +83,7 @@ class Attendance:
         self.sessionattendances[sessdate].append(student_attendance)
 
 
-def _get_attendance_id_from_course(course_id: int) -> int:
+def _get_attendance_cmid_from_course(course_id: int) -> int:
     """Return the course-module ID (cmid) of the single attendance activity in a course.
 
     Assumes that the course only has one attendance activity, and raises an exception
@@ -157,7 +157,7 @@ def _get_attendance_sessions(course_id: int) -> list[dict]:
     Returns:
         List of session dicts as returned by ``mod_attendance_get_sessions``.
     """
-    attendance_cmid = _get_attendance_id_from_course(course_id)
+    attendance_cmid = _get_attendance_cmid_from_course(course_id)
     attendance_id = _get_attendance_id_from_cmid(attendance_cmid)
     return call_moodle_api("mod_attendance_get_sessions", attendanceid=attendance_id)
 
@@ -172,7 +172,7 @@ def get_attendance_report(course_id: int) -> Attendance:
         An :class:`Attendance` instance containing all session records.
 
     Raises:
-        AttendanceException: If required API permissions are missing or the
+        MoodleAPIException: If required API permissions are missing or the
             course has no attendance activity.
     """
     check_api_permissions(REQUIRED_PERMISSIONS)
