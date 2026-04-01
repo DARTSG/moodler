@@ -36,7 +36,9 @@ class Attendance:
     def __init__(self):
         self.sessionattendances = {}
 
-    def __str__(self):
+    def __str__(self) -> str:
+        output = ""
+
         for session in self.sessionattendances:
             group_count = {}
             for student in self.sessionattendances.get(session):
@@ -44,12 +46,18 @@ class Attendance:
                     group_count[student.group] = 0
                 group_count[student.group] += 1
 
-            print(f"Session {session} - Total {len(self.sessionattendances[session])}")
+            output += (
+                f"Session {session} - Total {len(self.sessionattendances[session])}\n"
+            )
             for i in group_count:
-                print(f"{i}: {group_count[i]}")
-            print()
+                output += f"{i}: {group_count[i]}\n"
+            output += "\n"
 
-    def add_to_session(self, sessdate: str, student_attendance: StudentAttendance):
+        return output
+
+    def add_to_session(
+        self, sessdate: str, student_attendance: StudentAttendance
+    ) -> None:
         if sessdate not in self.sessionattendances:
             self.sessionattendances[sessdate] = []
         self.sessionattendances[sessdate].append(student_attendance)
