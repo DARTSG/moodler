@@ -67,12 +67,8 @@ def mod_glossary_get_entries_by_search(
     )
 
     if response["count"] == 0:
-        raise NoGlossaryEntry(
-            """Search entry for '{}' did not match any results.
-            Try using another search term.\n{}""".format(
-                query, response
-            )
-        )
+        raise NoGlossaryEntry("""Search entry for '{}' did not match any results.
+            Try using another search term.\n{}""".format(query, response))
 
     return response
 

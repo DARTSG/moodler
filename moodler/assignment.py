@@ -114,10 +114,16 @@ class Assignment(object):
             logger.info(
                 "Locked submissions for assignment '%s' for %s",
                 self.name,
-                students_names
-                if students_names is not None
-                else "all students"
-                + (" that submitted the exercise" if only_lock_resubmissions else ""),
+                (
+                    students_names
+                    if students_names is not None
+                    else "all students"
+                    + (
+                        " that submitted the exercise"
+                        if only_lock_resubmissions
+                        else ""
+                    )
+                ),
             )
 
     def unlock_submissions(self, course_id, students_names=None):
