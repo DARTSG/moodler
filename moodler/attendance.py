@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass
-from typing import Literal
 from datetime import datetime
+from typing import Literal
 
 from moodler.groups import get_course_groups
 from moodler.moodle_api import call_moodle_api, check_api_permissions
