@@ -110,3 +110,18 @@ def call_moodle_api(moodle_function, **kwargs):
 
     validate_response(moodle_function, response_json)
     return response_json
+
+
+def check_api_permissions(required_permissions: list[str]) -> None:
+    missing_permissions = []
+    data = call_moodle_api("core_webservice_get_site_info")
+    token_permissions = [function["name"] for function in data.get("functions", [])]
+
+    for perm in required_permissions:
+        if perm not in token_permissions:
+            missing_permissions.append(perm)
+
+    if missing_permissions:
+        raise MoodleAPIException(
+            f"API is missing the following permissions: {missing_permissions}"
+        )
