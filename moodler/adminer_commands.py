@@ -2,6 +2,7 @@
 This file will contain all the functionality to be called from the adminer
 interface in the Moodle UI.
 """
+
 import re
 
 from moodler.config import URL

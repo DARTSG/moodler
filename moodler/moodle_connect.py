@@ -9,6 +9,7 @@ So this file is meant only for containing the login logics. It will calculate
 and connect to the moodle to create a session cookie that will be used to run
 API directly from the web interface.
 """
+
 import logging
 import re
 
