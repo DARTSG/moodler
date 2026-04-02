@@ -212,8 +212,8 @@ def get_attendance_report(course_id: int) -> Attendance:
         human_readable_date = datetime.fromtimestamp(int(session)).strftime(
             "%Y-%m-%d %H:%M:%S"
         )
-        attendance.sessionattendances[
-            human_readable_date
-        ] = attendance.sessionattendances.pop(session)
+        attendance.sessionattendances[human_readable_date] = (
+            attendance.sessionattendances.pop(session)
+        )
 
     return attendance
