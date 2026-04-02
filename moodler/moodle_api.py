@@ -110,3 +110,41 @@ def call_moodle_api(moodle_function, **kwargs):
 
     validate_response(moodle_function, response_json)
     return response_json
+
+
+def check_api_permissions(required_permissions: list[str]) -> None:
+    """Verify that the configured API token has all required Moodle Web Service permissions.
+
+    Fetches the list of functions granted to the current token via
+    ``core_webservice_get_site_info`` and checks each entry in
+    ``required_permissions`` against it.
+
+    Args:
+        required_permissions: List of Moodle Web Service function names that
+            must be enabled for the token (e.g. ``"mod_attendance_get_sessions"``).
+
+    Raises:
+        MoodleAPIException: If one or more required permissions are not granted
+            to the token.
+    """
+    missing_permissions = []
+
+    # Retrieve the functions the current token is authorised to call
+    try:
+        data = call_moodle_api("core_webservice_get_site_info")
+    except MoodleAPIException:
+        raise MoodleAPIException(
+            "Failed to retrieve site info. Please check that the API token and URL are correct, "
+            "and that the token has permission to call 'core_webservice_get_site_info'."
+        )
+
+    token_permissions = [function["name"] for function in data.get("functions", [])]
+
+    for perm in required_permissions:
+        if perm not in token_permissions:
+            missing_permissions.append(perm)
+
+    if missing_permissions:
+        raise MoodleAPIException(
+            f"API is missing the following permissions: {missing_permissions}"
+        )
